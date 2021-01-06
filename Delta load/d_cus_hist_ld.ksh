@@ -1,0 +1,557 @@
+#!/bin/ksh
+
+######################################################################
+# Script : d_cus_hist_ld.ksh
+# Description : This script loads the Customer History table 
+#               DWH_D_CUS_HIST_LU using TEMP TABLE 
+#				TEMP0_D_CUS_LU.
+# Modifications
+# 2/2/2019  : Logic  : Initial Script
+######################################################################
+export SCRIPT_NAME=$(basename ${0%%.ksh})
+export DIM_CLOSABLE=1
+. ${ETLHOME}/etc/ENV.cfg
+. ${LIB_DIR}/run_lib.ksh
+
+##################################################
+SOURCE_TABLE="STG_D_CUS_LU"
+TEMP0_TABLE="TMP0_D_CUS_LU"
+TEMP_TABLE="TMP_D_CUS_HIST_LU"
+TARGET_TABLE="DWH_D_CUS_HIST_LU"
+TEMP_FIX_TABLE="TMP_D_CUS_HIST_FIX_LU"
+
+DIM_IDNT='CUS_KEY'
+DIM_KEY='CUS_HIST_KEY'
+
+TEMP_TABLE_COLUMN='CUS_ID
+HHLD_HIST_KEY
+FIRST_NAME
+FIRST_NAME_SCRBD
+LAST_NAME
+LAST_NAME_SCRBD
+ADDRESS1
+ADDRESS1_SCRBD
+ADDRESS2
+ADDRESS2_SCRBD
+CITY
+CITY_SCRBD
+STATE_CDE
+STATE_SCRBD
+ZIP_CDE
+ZIP_CODE_SCRBD
+ZIP4_CDE
+ZIP4_CODE_SCRBD
+ZIP_FULL_CDE_SCRBD
+NON_US_POSTAL_CDE
+COUNTRY_CDE
+COUNTRY_CDE_SCRBD
+NON_US_CUS_FLG
+IS_ADDRESS_VALID_FLG
+IS_ADDRESS_LIKELY_VALID_FLG
+IS_EMAIL_VALID_FLG
+IS_PHONE_FOR_SMS_VALID_FLG
+PHONE_NUM
+PHONE_TYP
+EMAIL_ADDRESS
+GENDER_CDE
+DIRECT_MAIL_CONSENT_FLG
+EMAIL_CONSENT_FLG
+SMS_CONSENT_FLG
+BIRTH_DT
+AGE
+AGE_GRP_CDE
+AGE_QUALIFIER
+DECEASED_FLG
+ADDRESS_IS_PRISON_FLG
+ADD_DT
+INTRODCTN_DT
+LATITUDE
+LONGITUDE
+CLOSEST_LOC_KEY
+DIST_TO_CLOSEST_LOC
+SECOND_CLOSEST_LOC_KEY
+DIST_TO_SEC_CLOSEST_LOC
+PREFERRED_LOC_KEY
+DIST_TO_PREFERRED_LOC
+FIRST_TXN_DT
+FIRST_TXN_LOC_KEY
+BRAND_FIRST_TXN_DT
+ADS_DONOT_STATMNT_INS_IND
+ADS_DONOT_SELL_NAME_IND
+ADS_SPAM_IND
+ADS_EMAIL_CHANGE_DT
+ADS_RTRN_MAIL_FLG
+IS_DM_MARKETABLE_FLG
+IS_EM_MARKETABLE_FLG
+IS_SMS_MARKETABLE_FLG
+RCD_TYP
+EMAIL_CONSENT_DT
+SMS_CONSENT_DT
+DIRECT_MAIL_CONSENT_DT
+LYLTY_ID
+HAS_PLCC_FLG
+IS_LYLTY_MEMBER_FLG
+IS_ALIST_FLG
+LYLTY_TIER
+LYLTY_MEMBER_STTS
+LYLTY_ACCT_OPEN_DT
+LYLTY_ACCT_CLOSE_DT
+LYLTY_ACCT_ENROLL_DT
+NEXT_CONVRSN_STTS
+NCOA_LAST_CNG_DT
+LYLTY_ENRLMNT_LOC_KEY
+LYLTY_ENRLMNT_SRC_KEY
+PLCC_OPEN_DT
+PLCC_CLOSE_DT
+CS_AGENT_KEY
+LOC_ASSOCIATE_KEY
+EMP_AGG_KEY
+REGSTRTN_DEVICE_TYP_CDE_KEY
+REGSTRTN_DEVICE_TYP_ID
+REGSTRTN_CHNL_SUB_TYP_ID
+REGSTRTN_CHNL_ID
+TERMNTN_REASN
+LYLTY_ENRLMNT_SRC
+PFCOM_FLG
+PFCOM_DT
+PFCOM_LOC_KEY
+PFCOM_ASSOCIATE_KEY
+PFCOM_CS_AGENT_KEY
+PFCOM_EMP_AGG_KEY
+PFCOM_SRC
+PFCOM_DEVICE_TYP_CDE_KEY
+PFCOM_DEVICE_TYP_ID
+PFCOM_CHNL_SUB_TYP_ID
+PFCOM_CHNL_ID
+PFCOM_RWD_FLG
+PFUPD_DT
+YRLY_PFUPD_DT
+PFUPD_LOC_KEY
+PFUPD_ASSOCIATE_KEY
+PFUPD_CS_AGENT_KEY
+PFUPD_EMP_AGG_KEY
+PFUPD_SRC
+PFUPD_DEVICE_TYP_CDE_KEY
+PFUPD_DEVICE_TYP_ID
+PFUPD_CHNL_SUB_TYP_ID
+PFUPD_CHNL_ID
+YRLY_PFUPD_DEVICE_TYP_CDE_KEY
+YRLY_PFUPD_DEVICE_TYP_ID
+YRLY_PFUPD_CHNL_SUB_TYP_ID
+YRLY_PFUPD_CHNL_ID
+SIGNUP_TYP
+LYLTY_TIER_KEY
+TIER_FROM_DT
+TIER_TO_DT
+TIER_MOVE_REASN
+EMP_KEY
+IS_EMP_FLG'
+
+####### SET VARIABLES ######################################
+set_variables
+print_msg "${SCRIPT_NAME} Started"
+start_script
+
+####### LOAD INTO TEMPORARY FIX TABLE FOR NEW CUSTOMERS ##########################
+if [[ ${BOOKMARK} = "NONE" ]]
+then
+	print_msg "Load into Temporary Fix Table for New Customers Started"
+	print_msg "Truncate Temporary Fix Table"
+	truncate_table -d "${TEMP_DB}" -t "${TEMP_FIX_TABLE}"
+	print_msg "${TEMP_FIX_TABLE} truncated successfully"
+	print_msg "Loading ${TEMP_FIX_TABLE}"
+	
+	INSERT_SQL="
+	INSERT INTO ${TEMP_DB}.${TEMP_FIX_TABLE}
+	SELECT A.CUS_KEY
+		, A.CUS_ID
+		, B.MIN_EFF_FROM_DT
+		, A.MIN_TXN_DT
+		, 1
+	FROM (
+		SELECT CUS_KEY
+			, CUS_ID
+			, MIN(TXN_DT_KEY) MIN_TXN_DT
+		FROM ${TEMP_DB}.TMP_F_CUS_TXN_SUMMARY_B
+		GROUP BY 1, 2
+	) A
+	INNER JOIN (
+		SELECT CUS_ID
+			, MIN(INGEST_DT) MIN_EFF_FROM_DT
+		FROM ${TEMP_DB}.${TEMP0_TABLE} SRC
+		WHERE NOT EXISTS (
+			SELECT 1 
+			FROM ${VIEW_DB}.${VIEW_PREFIX}DWH_D_CUS_HIST_LU TGT
+			WHERE TGT.CUS_ID=SRC.CUS_ID
+				AND TGT.RCD_CLOSE_FLG=0
+		)
+		GROUP BY 1
+	) B ON A.CUS_ID=B.CUS_ID;	
+	"
+	
+	run_query -d "${TEMP_DB}" -q "${INSERT_SQL}" -m "Unable to Insert Records into temp fix table for new customers" 
+	print_msg "${TEMP_FIX_TABLE} loaded successfully"
+	set_activity_count insert
+	audit_log 2 ${TEMP_DB} ${TEMP0_TABLE} "*" ${TEMP_FIX_TABLE}
+	set_bookmark "AFTER_LOAD_TEMP_FIX_TABLE_NEW"
+fi
+
+####### LOAD INTO TEMPORARY FIX TABLE FOR EXISTING CUSTOMERS ##########################
+if [[ ${BOOKMARK} = "AFTER_LOAD_TEMP_FIX_TABLE_NEW" ]]
+then
+	print_msg "Load into Temporary Fix Table for Existing Customers Started"
+	print_msg "Loading ${TEMP_FIX_TABLE}"
+	
+	INSERT_SQL="
+	INSERT INTO ${TEMP_DB}.${TEMP_FIX_TABLE}
+	SELECT A.CUS_KEY
+		, A.CUS_ID
+		, B.MIN_EFF_FROM_DT
+		, A.MIN_TXN_DT
+		, 0
+	FROM (
+		SELECT CUS_KEY
+			, CUS_ID
+			, MIN(TXN_DT_KEY) MIN_TXN_DT
+		FROM ${TEMP_DB}.TMP_F_CUS_TXN_SUMMARY_B
+		GROUP BY 1, 2
+	) A
+	INNER JOIN (
+		SELECT CUS_KEY
+			, MIN(EFF_FROM_DT) MIN_EFF_FROM_DT
+		FROM ${VIEW_DB}.${VIEW_PREFIX}DWH_D_CUS_HIST_LU 
+		GROUP BY 1
+	) B ON A.CUS_KEY=B.CUS_KEY 
+		AND A.MIN_TXN_DT<B.MIN_EFF_FROM_DT;	
+	"
+	
+	run_query -d "${TEMP_DB}" -q "${INSERT_SQL}" -m "Unable to Insert Records into temp fix table for existing customers" 
+	print_msg "${TEMP_FIX_TABLE} loaded successfully"
+	set_activity_count insert
+	audit_log 2 ${TEMP_DB} ${TEMP0_TABLE} "*" ${TEMP_FIX_TABLE}
+	set_bookmark "AFTER_LOAD_TEMP_FIX_TABLE_EXIST"
+fi
+
+############### COLLECT STATS FOR TEMP FIX TABLE ########################
+if [[ ${BOOKMARK} = "AFTER_LOAD_TEMP_FIX_TABLE_EXIST" ]]
+then
+	print_msg "Collecting Statistics for ${TEMP_FIX_TABLE}"   
+	
+	STATS_SQL="
+	COLLECT STATS COLUMN(CUS_KEY, MIN_EFF_FROM_DT)		
+		,COLUMN(CUS_KEY)		
+		,COLUMN(MIN_EFF_FROM_DT)
+		,COLUMN(NEW_CUS_FLG)
+	ON ${TEMP_DB}.${TEMP_FIX_TABLE};	
+	"
+	
+	run_query -d "${TEMP_DB}" -q "${STATS_SQL}" -m "Unable to collect statistics for Target Table"
+	print_msg "${TEMP_FIX_TABLE} Statistics collected successfully"
+	set_bookmark "AFTER_COLLECT_STATS_TEMP_FIX_TABLE"
+fi
+
+####### LOAD INTO TEMPORARY TABLE ##########################
+if [[ ${BOOKMARK} = "AFTER_COLLECT_STATS_TEMP_FIX_TABLE" ]]
+then
+	print_msg "Load into Temporary Table Started"
+	print_msg "Truncate Temporary Table"
+	truncate_table -d "${TEMP_DB}" -t "${TEMP_TABLE}"
+	print_msg "${TEMP_TABLE} truncated successfully"
+	print_msg "Loading ${TEMP_TABLE}"
+	
+	INSERT_SQL="
+	INSERT INTO ${TEMP_DB}.${TEMP_TABLE}
+				( ${DIM_IDNT}
+				,${TEMP_TABLE_COLUMN_LIST}
+				,RCD_CLOSE_FLG
+				,EFF_FROM_DT
+				,EFF_TO_DT
+				)
+	SELECT ${DIM_IDNT}
+		,${TEMP_TABLE_COLUMN_LIST}
+		,CASE
+			WHEN END(SRC.PD)=CAST('9999-12-31' AS DATE FORMAT 'YYYY-MM-DD')
+				THEN 0
+			ELSE 
+				1
+		END RCD_CLOSE_FLG
+		,BEGIN(SRC.PD) EFF_FROM_DT
+		,CASE
+			WHEN RCD_CLOSE_FLG=1
+				THEN END(SRC.PD)-1
+			ELSE 
+				END(SRC.PD)
+		END EFF_TO_DT
+	FROM (
+		SELECT NORMALIZE A.CUS_KEY
+			,A.CUS_ID
+			,A.HHLD_HIST_KEY
+			,A.FIRST_NAME
+			,A.FIRST_NAME_SCRBD
+			,A.LAST_NAME
+			,A.LAST_NAME_SCRBD
+			,A.ADDRESS1
+			,A.ADDRESS1_SCRBD
+			,A.ADDRESS2
+			,A.ADDRESS2_SCRBD
+			,A.CITY
+			,A.CITY_SCRBD
+			,A.STATE_CDE
+			,A.STATE_SCRBD
+			,A.ZIP_CDE
+			,A.ZIP_CODE_SCRBD
+			,A.ZIP4_CDE
+			,A.ZIP4_CODE_SCRBD
+			,A.ZIP_FULL_CDE_SCRBD
+			,A.NON_US_POSTAL_CDE
+			,A.COUNTRY_CDE
+			,A.COUNTRY_CDE_SCRBD
+			,A.NON_US_CUS_FLG
+			,A.IS_ADDRESS_VALID_FLG
+			,A.IS_ADDRESS_LIKELY_VALID_FLG
+			,A.IS_EMAIL_VALID_FLG
+			,A.IS_PHONE_FOR_SMS_VALID_FLG
+			,A.PHONE_NUM
+			,A.PHONE_TYP
+			,A.EMAIL_ADDRESS
+			,A.GENDER_CDE
+			,A.DIRECT_MAIL_CONSENT_FLG
+			,A.EMAIL_CONSENT_FLG
+			,A.SMS_CONSENT_FLG
+			,A.BIRTH_DT
+			,A.AGE
+			,A.AGE_GRP_CDE
+			,A.AGE_QUALIFIER
+			,A.DECEASED_FLG
+			,A.ADDRESS_IS_PRISON_FLG
+			,A.ADD_DT
+			,A.INTRODCTN_DT
+			,A.LATITUDE
+			,A.LONGITUDE
+			,A.CLOSEST_LOC_KEY
+			,A.DIST_TO_CLOSEST_LOC
+			,A.SECOND_CLOSEST_LOC_KEY
+			,A.DIST_TO_SEC_CLOSEST_LOC
+			,A.PREFERRED_LOC_KEY
+			,A.DIST_TO_PREFERRED_LOC
+			,A.FIRST_TXN_DT
+			,A.FIRST_TXN_LOC_KEY
+			,A.BRAND_FIRST_TXN_DT
+			,A.ADS_DONOT_STATMNT_INS_IND
+			,A.ADS_DONOT_SELL_NAME_IND
+			,A.ADS_SPAM_IND
+			,A.ADS_EMAIL_CHANGE_DT
+			,A.ADS_RTRN_MAIL_FLG
+			,A.IS_DM_MARKETABLE_FLG
+			,A.IS_EM_MARKETABLE_FLG
+			,A.IS_SMS_MARKETABLE_FLG
+			,A.RCD_TYP
+			,A.EMAIL_CONSENT_DT
+			,A.SMS_CONSENT_DT
+			,A.DIRECT_MAIL_CONSENT_DT
+			,A.LYLTY_ID
+			,A.HAS_PLCC_FLG
+			,A.IS_LYLTY_MEMBER_FLG
+			,A.IS_ALIST_FLG
+			,A.LYLTY_TIER
+			,A.LYLTY_MEMBER_STTS
+			,A.LYLTY_ACCT_OPEN_DT
+			,A.LYLTY_ACCT_CLOSE_DT
+			,A.LYLTY_ACCT_ENROLL_DT
+			,A.NEXT_CONVRSN_STTS
+			,A.NCOA_LAST_CNG_DT
+			,A.LYLTY_ENRLMNT_LOC_KEY
+			,A.LYLTY_ENRLMNT_SRC_KEY
+			,A.PLCC_OPEN_DT
+			,A.PLCC_CLOSE_DT
+			,A.CS_AGENT_KEY
+			,A.LOC_ASSOCIATE_KEY
+			,A.EMP_AGG_KEY
+			,A.REGSTRTN_DEVICE_TYP_CDE_KEY
+			,A.REGSTRTN_DEVICE_TYP_ID
+			,A.REGSTRTN_CHNL_SUB_TYP_ID
+			,A.REGSTRTN_CHNL_ID
+			,A.TERMNTN_REASN
+			,A.LYLTY_ENRLMNT_SRC
+			,A.PFCOM_FLG
+			,A.PFCOM_DT
+			,A.PFCOM_LOC_KEY
+			,A.PFCOM_ASSOCIATE_KEY
+			,A.PFCOM_CS_AGENT_KEY
+			,A.PFCOM_EMP_AGG_KEY
+			,A.PFCOM_SRC
+			,A.PFCOM_DEVICE_TYP_CDE_KEY
+			,A.PFCOM_DEVICE_TYP_ID
+			,A.PFCOM_CHNL_SUB_TYP_ID
+			,A.PFCOM_CHNL_ID
+			,A.PFCOM_RWD_FLG
+			,A.PFUPD_DT
+			,A.YRLY_PFUPD_DT
+			,A.PFUPD_LOC_KEY
+			,A.PFUPD_ASSOCIATE_KEY
+			,A.PFUPD_CS_AGENT_KEY
+			,A.PFUPD_EMP_AGG_KEY
+			,A.PFUPD_SRC
+			,A.PFUPD_DEVICE_TYP_CDE_KEY
+			,A.PFUPD_DEVICE_TYP_ID
+			,A.PFUPD_CHNL_SUB_TYP_ID
+			,A.PFUPD_CHNL_ID
+			,A.YRLY_PFUPD_DEVICE_TYP_CDE_KEY
+			,A.YRLY_PFUPD_DEVICE_TYP_ID
+			,A.YRLY_PFUPD_CHNL_SUB_TYP_ID
+			,A.YRLY_PFUPD_CHNL_ID
+			,A.SIGNUP_TYP
+			,A.LYLTY_TIER_KEY
+			,A.TIER_FROM_DT
+			,A.TIER_TO_DT
+			,A.TIER_MOVE_REASN
+			,A.EMP_KEY
+			,A.IS_EMP_FLG
+			,PERIOD(
+				COALESCE(FIX.MIN_TXN_DT, A.INGEST_DT)
+				, A.NEXT_INGEST_DT
+			) PD
+		FROM (
+			SELECT TMP.*
+				,  CUS.CUS_KEY
+			FROM ${TEMP_DB}.${TEMP0_TABLE} TMP
+			INNER JOIN (
+				SELECT CUS_KEY
+					,CUS_ID
+				FROM ${VIEW_DB}.${VIEW_PREFIX}DWH_D_CUS_LU
+			) CUS ON TMP.CUS_ID=CUS.CUS_ID			
+		) A		
+		LEFT OUTER JOIN (
+			SELECT CUS_KEY
+				, MIN_TXN_DT
+			FROM ${TEMP_DB}.${TEMP_FIX_TABLE}
+			WHERE NEW_CUS_FLG=1
+		) FIX ON A.CUS_KEY=FIX.CUS_KEY
+	) SRC;
+	"
+	
+	run_query -d "${TEMP_DB}" -q "${INSERT_SQL}" -m "Unable to Insert Records for Customer History into temp table" 
+	print_msg "${TEMP_TABLE} loaded successfully"
+	set_activity_count insert
+	audit_log 2 ${TEMP_DB} ${TEMP0_TABLE} "*" ${TEMP_TABLE}
+	set_bookmark "AFTER_LOAD_TEMP_TABLE"
+fi
+
+###### COLLECT STATS TMP TABLE ##############
+if [[ ${BOOKMARK} = "AFTER_LOAD_TEMP_TABLE" ]]
+then
+	print_msg "Collecting Statistics for ${TEMP_TABLE}"
+	
+	STATS_SQL="
+	COLLECT STATS COLUMN(CUS_KEY)
+		, COLUMN(CUS_KEY, EFF_FROM_DT) 
+	ON ${TEMP_DB}.${TEMP_TABLE};
+	"
+	
+	run_query -d "${TEMP_DB}" -q "${STATS_SQL}" -m "Unable to collect statistics for Temp Table"
+	print_msg "${TEMP_TABLE} Statistics collected successfully"
+	set_bookmark "AFTER_COLLECT_STATS_TMP"
+fi
+
+############### LOAD INTO TARGET TABLE ########################
+if [[ ${BOOKMARK} = "AFTER_COLLECT_STATS_TMP" ]]
+then
+	print_msg "Loading ${TARGET_TABLE}"
+	scd_close_and_insert_using_temp
+	set_bookmark "AFTER_INSERT_FROM_TEMP"
+fi
+
+############### UPDATE RCD_TMP_CLOSE_FLG IN TARGET TABLE ########################
+if [[ ${BOOKMARK} = "AFTER_INSERT_FROM_TEMP" ]]
+then   
+	print_msg "Updating RCD_TMP_CLOSE_FLG in ${TARGET_TABLE}"
+	
+	UPDATE_SQL="
+	UPDATE TGT
+	FROM ${TARGET_DB}.${TARGET_TABLE} TGT, 
+		${TEMP_DB}.${TEMP_TABLE} SRC
+	SET RCD_TMP_CLOSE_FLG=1
+	WHERE SRC.CUS_KEY=TGT.CUS_KEY
+		AND TGT.RCD_CLOSE_FLG=1 
+		AND TGT.RCD_TMP_CLOSE_FLG=0
+		AND SRC.RCD_CLOSE_FLG=0;
+	"
+	
+	run_query -d "${TARGET_DB}" -q "${UPDATE_SQL}" -m "Unable to update Target Table"
+	print_msg "${TARGET_TABLE} updated successfully with RCD_TMP_CLOSE_FLG"
+	set_activity_count update
+	audit_log 3
+	set_bookmark "AFTER_UPDATE_RCD_TMP_FLG"
+	print_msg "${TARGET_TABLE} Load Complete"
+fi
+
+############### COLLECT STATS FOR TARGET TABLE ########################
+if [[ ${BOOKMARK} = "AFTER_UPDATE_RCD_TMP_FLG" ]]
+then
+	print_msg "Collecting Statistics for ${TARGET_TABLE}"   
+	
+	STATS_SQL="
+	COLLECT STATS COLUMN(CUS_HIST_KEY)
+		,COLUMN(CUS_KEY, EFF_FROM_DT)
+		,COLUMN(CUS_KEY)
+		,COLUMN(CUS_ID)
+		,COLUMN(EFF_FROM_DT)
+		,COLUMN(RCD_CLOSE_FLG)
+		,COLUMN(RCD_TMP_CLOSE_FLG)
+	ON ${TARGET_DB}.${TARGET_TABLE};	
+	"
+	
+	run_query -d "${TARGET_DB}" -q "${STATS_SQL}" -m "Unable to collect statistics for Target Table"
+	print_msg "${TARGET_TABLE} Statistics collected successfully"
+	set_bookmark "AFTER_COLLECT_STATS_TGT"
+fi
+
+############### UPDATE/FIX EARLIEST EFFECTIVE FROM DATE FOR EXISTING CUSTOMER  ########################
+if [[ ${BOOKMARK} = "AFTER_COLLECT_STATS_TGT" ]]
+then
+	print_msg "Updating earliest EFF_FROM_DT in ${TARGET_TABLE}"
+	
+	UPDATE_SQL="
+	UPDATE TGT
+	FROM ${TARGET_DB}.${TARGET_TABLE} TGT
+		, (
+			SELECT CUS_KEY
+				, MIN_TXN_DT
+				, MIN_EFF_FROM_DT
+			FROM ${TEMP_DB}.${TEMP_FIX_TABLE} TMP
+			WHERE NEW_CUS_FLG=0
+		) TMP
+	SET EFF_FROM_DT=MIN_TXN_DT
+	WHERE TGT.CUS_KEY=TMP.CUS_KEY 
+		AND EFF_FROM_DT=MIN_EFF_FROM_DT;		
+	"
+	
+	run_query -d "${TARGET_DB}" -q "${UPDATE_SQL}" -m "Unable to update Target Table"
+	print_msg "${TARGET_TABLE} updated successfully with earliest EFF_FROM_DT"
+	set_activity_count update
+	audit_log 3
+	set_bookmark "AFTER_UPDATE_EFF_FROM_DT"
+fi
+
+############### COLLECT STATS FOR TARGET TABLE ########################
+if [[ ${BOOKMARK} = "AFTER_UPDATE_EFF_FROM_DT" ]]
+then
+	print_msg "Collecting Statistics for ${TARGET_TABLE}"   
+	
+	STATS_SQL="
+	COLLECT STATS COLUMN(CUS_HIST_KEY)
+		,COLUMN(CUS_KEY, EFF_FROM_DT)
+		,COLUMN(CUS_KEY)
+		,COLUMN(CUS_ID)
+		,COLUMN(EFF_FROM_DT)
+		,COLUMN(RCD_CLOSE_FLG)
+		,COLUMN(RCD_TMP_CLOSE_FLG)
+	ON ${TARGET_DB}.${TARGET_TABLE};	
+	"
+	
+	run_query -d "${TARGET_DB}" -q "${STATS_SQL}" -m "Unable to collect statistics for Target Table"
+	print_msg "${TARGET_TABLE} Statistics collected successfully"
+	set_bookmark "DONE"
+fi
+
+script_successful

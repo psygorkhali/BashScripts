@@ -1,0 +1,1549 @@
+d_cus_ld 12/31/2020 03:23:02: Getting Module Type from DWH_C_BATCH_SCRIPTS
+Start:************************
+query_command : SELECT MODULE_TYP FROM EXPDW_ETE_DWH_V.V_DWH_C_BATCH_SCRIPTS WHERE LOWER(SCRIPT_NAME)=LOWER('d_cus_ld')
+END:************************
+
+d_cus_ld 12/31/2020 03:23:02: The current Module Type is : NTLY
+
+d_cus_ld 12/31/2020 03:23:02: Getting Module Load Type from DWH_C_BATCH_SCRIPTS
+Start:************************
+query_command : SELECT MODULE_LOAD_TYP FROM EXPDW_ETE_DWH_V.V_DWH_C_BATCH_SCRIPTS WHERE LOWER(SCRIPT_NAME)=LOWER('d_cus_ld')
+END:************************
+
+d_cus_ld 12/31/2020 03:23:03: The current Module Load Type is : NA
+d_cus_ld 12/31/2020 03:23:03: Getting Batch ID from DWH_C_BATCH_LOG
+Start:************************
+query_command : SELECT CAST(COALESCE(MAX(BATCH_ID),0) AS VARCHAR(20) ) FROM EXPDW_ETE_DWH_V.V_DWH_C_BATCH_LOG WHERE MODULE_NAME='NTLY'
+END:************************
+
+d_cus_ld 12/31/2020 03:23:03: The current Batch ID is : 1539
+
+d_cus_ld 12/31/2020 03:23:03: Getting Job Id from DWH_C_BATCH_SCRIPTS
+Start:************************
+query_command : SELECT TRIM(JOB_ID) FROM EXPDW_ETE_DWH_V.V_DWH_C_BATCH_SCRIPTS WHERE LOWER(SCRIPT_NAME)=LOWER('d_cus_ld')
+END:************************
+
+d_cus_ld 12/31/2020 03:23:04: The current Job ID is : 505
+
+d_cus_ld 12/31/2020 03:23:04: Getting bookmark from DWH_C_BATCH_LOG table
+Start:************************
+query_command : SELECT BOOKMARK FROM
+						(SELECT BOOKMARK,ROW_NUMBER() OVER (PARTITION BY JOB_NAME,BATCH_ID ORDER BY START_TIMESTAMP DESC,JOB_ID DESC) RNK FROM EXPDW_ETE_DWH_V.V_DWH_C_BATCH_LOG
+							WHERE  JOB_NAME = 'd_cus_ld'
+							AND BATCH_ID = 1539
+							AND STATUS='RESTART') AA
+						WHERE RNK=1
+							
+END:************************
+
+d_cus_ld 12/31/2020 03:23:04: The bookmark is : NONE
+d_cus_ld 12/31/2020 03:23:04: Checking for run-ability of the job for the batch
+Start:************************
+query_command : SELECT 1 FROM EXPDW_ETE_DWH_V.V_DWH_C_BATCH_LOG
+						WHERE  JOB_NAME = 'd_cus_ld'
+								AND BATCH_ID = 1539
+								AND STATUS IN ('COMPLETE','ERROR')
+						
+END:************************
+
+d_cus_ld 12/31/2020 03:23:05: Job ready for the run for the batch
+
+
+==============================================================================================================================================
+====================================================  RUNNING CODES FOR BOOKMARK = NONE  ================================================
+==============================================================================================================================================
+
+
+d_cus_ld 12/31/2020 03:23:05: Getting Current Date
+Start:************************
+query_command : SELECT PARAM_VALUE FROM EXPDW_ETE_DWH_V.V_DWH_C_PARAM WHERE  PARAM_NAME='BUSINESS_DATE'
+END:************************
+
+d_cus_ld 12/31/2020 03:23:05: Current date for the job = 2020-12-29
+
+d_cus_ld 12/31/2020 03:23:05: Getting load mode for the job
+Start:************************
+query_command : SELECT PARAM_VALUE FROM EXPDW_ETE_DWH_V.V_DWH_C_PARAM WHERE PARAM_NAME='Insert Mode'
+END:************************
+
+d_cus_ld 12/31/2020 03:23:06: The load mode for the job = Full
+
+d_cus_ld 12/31/2020 03:23:06: Getting primary currency for the job
+Start:************************
+query_command : SELECT PARAM_VALUE FROM EXPDW_ETE_DWH_V.V_DWH_C_PARAM WHERE PARAM_NAME='Primary Currency'
+END:************************
+
+d_cus_ld 12/31/2020 03:23:06: The primary currency for the job = USD
+
+d_cus_ld 12/31/2020 03:23:06: d_cus_ld Started
+d_cus_ld 12/31/2020 03:23:06: Getting current time-stamp for the job execution
+Start:************************
+query_command : SELECT CAST(CURRENT_TIMESTAMP AS TIMESTAMP(6))
+END:************************
+
+d_cus_ld 12/31/2020 03:23:06: The current time-stamp of the job = 2020-12-31 03:23:06.500000
+
+d_cus_ld 12/31/2020 03:23:06: Inserting batch log
+Start:************************
+query_command : INSERT INTO EXPDW_ETE_DWH.DWH_C_BATCH_LOG (
+                        BATCH_ID 
+    				   ,JOB_ID
+    				   ,MODULE_NAME
+    				   ,JOB_NAME
+    				   ,BUSINESS_DATE
+    				   ,START_TIMESTAMP
+    				   ,END_TIMESTAMP
+    				   ,STATUS
+    				   ,ERROR_DETAIL
+    				   ,BOOKMARK
+    				   ,LOGFILE)
+                   SELECT 1539
+                         ,505
+                         ,'NTLY'
+                        ,'d_cus_ld'
+    					 ,'2020-12-29'
+                         ,'2020-12-31 03:23:06.500000'
+                         ,CAST('9999-09-09' AS DATE FORMAT 'YYYY-MM-DD')
+                         ,'RUNNING'
+                         ,'RUNNING'
+                         ,'NONE'
+                         ,'/batch/ete/log/d_cus_ld_20201231032302.log'
+                   
+END:************************
+
+d_cus_ld 12/31/2020 03:23:07: Dropping Secondary Index for STG_D_CUS_LU if exists
+Start:************************
+query_command : 
+	SELECT 1 FROM DBC.INDICES WHERE DATABASENAME='EXPDW_ETE_STG' AND TABLENAME='STG_D_CUS_LU' AND COLUMNNAME='HHLD_ID';
+	.if activitycount = 0 then GoTo ok
+	DROP INDEX (HHLD_ID) ON EXPDW_ETE_STG.STG_D_CUS_LU;
+	.label ok
+	
+END:************************
+
+d_cus_ld 12/31/2020 03:23:08: STG_D_CUS_LU Secondary Index dropped successfully if exists
+Truncate Staging Table
+d_cus_ld 12/31/2020 03:23:08: Truncating table STG_D_CUS_LU
+Start:************************
+query_command : DELETE FROM EXPDW_ETE_STG.STG_D_CUS_LU ALL
+END:************************
+
+d_cus_ld 12/31/2020 03:23:09: STG_D_CUS_LU truncated successfully
+d_cus_ld 12/31/2020 03:23:09: Checking availability of error1 table
+Start:************************
+query_command : SELECT count(*) FROM dbc.tables WHERE databasename='EXPDW_ETE_STG' and tablename='ERR1_D_CUS_LU'
+END:************************
+
+d_cus_ld 12/31/2020 03:23:10: Checking availability of error2 table
+Start:************************
+query_command : SELECT count(*) FROM dbc.tables WHERE databasename='EXPDW_ETE_STG' and tablename='ERR2_D_CUS_LU'
+END:************************
+
+d_cus_ld 12/31/2020 03:23:11: Checking file integrity d_cus_lu_20201231025220.TXT
+d_cus_ld 12/31/2020 03:23:11: Checking integrity of the file 
+FILE_NAME=/batch/ete/data/customer/customer/d_cus_lu_20201231025220.TXT
+d_cus_ld 12/31/2020 03:23:11: md5value: 57da75c2aed99b6948fd1493f7479f98
+d_cus_ld 12/31/2020 03:23:11: No of rows :98
+mv /batch/ete/data/customer/customer/d_cus_lu_20201231025220.TXT_temp /batch/ete/data/customer/customer/d_cus_lu_20201231025220.TXT
+rm -f /batch/ete/data/customer/customer/d_cus_lu_20201231025220.TXT_temp
+d_cus_ld 12/31/2020 03:23:11: md5value: 57da75c2aed99b6948fd1493f7479f98
+d_cus_ld 12/31/2020 03:23:11: No of rows :98
+d_cus_ld 12/31/2020 03:23:11: 57da75c2aed99b6948fd1493f7479f98 and count       98
+d_cus_ld 12/31/2020 03:23:11: Loading STG_D_CUS_LU
+Start:************************
+query_command : SELECT
+    CASE WHEN ColumnId = (min(ColumnId) over (order by ColumnId)) THEN ' ' ELSE ',' END
+    || ColumnName
+    || '(VARCHAR('
+    || CASE WHEN ColumnType = 'I1' THEN '4' /* ByteInt */
+            WHEN ColumnType = 'I2' THEN '6' /* SmallInt */
+            WHEN ColumnType = 'I ' THEN '11' /* Integer */
+            WHEN ColumnType = 'I8' THEN '20' /* BigInt */
+            WHEN ColumnType = 'D ' THEN TRIM(DecimalTotalDigits + 1) /* Decimal */
+            WHEN ColumnType in ('CV','CF','BV','BF') THEN TRIM(CAST(ColumnLength AS INTEGER)) /* VARCHAR,CHAR,VARBYTEBYTE */
+            WHEN ColumnType = 'DA' THEN '10' /* DATE */
+            WHEN ColumnType = 'AT' THEN TRIM(9 + DecimalFractionalDigits) /* Time */
+            WHEN ColumnType = 'TS' THEN TRIM(20 + DecimalFractionalDigits) /* TIMESTAMP */
+       ELSE '255' END
+    || '))'
+    FROM DBC.COLUMNS WHERE UPPER(TableName) = UPPER('STG_D_CUS_LU') AND UPPER(DatabaseName) = UPPER('EXPDW_ETE_STG')
+    
+END:************************
+
+     ===================================================================
+     =                                                                 =
+     =          FASTLOAD UTILITY     VERSION 15.10.00.00               =
+     =          PLATFORM LINUX                                         =
+     =          PID      10293                                         =
+     =                                                                 =
+     ===================================================================
+
+     ===================================================================
+     =                                                                 =
+     =          Copyright 1984-2015, Teradata Corporation.             =
+     =          ALL RIGHTS RESERVED.                                   =
+     =                                                                 =
+     ===================================================================
+
+**** 03:23:11 Processing starting at: Thu Dec 31 03:23:11 2020
+
+0001 	.sessions 10
+
+**** 03:23:11 FDL4866 SESSIONS command accepted
+
+     ===================================================================
+     =                                                                 =
+     =          Logon/Connection                                       =
+     =                                                                 =
+     ===================================================================
+
+0002 	.LOGON expdwdn.expressco.com/expeadm,
+
+**** 03:23:11 Teradata Database Release: 15.10.07.15
+**** 03:23:11 Teradata Database Version: 15.10.07.15
+**** 03:23:11 Number of AMPs available: 80
+**** 03:23:11 Current CLI or RDBMS allows maximum row size: 64K
+**** 03:23:11 Character set for this job: ASCII
+
+0003 	DATABASE EXPDW_ETE_STG;
+
+**** 03:23:11 Command completed successfully
+
+0004 	DELETE FROM EXPDW_ETE_STG.STG_D_CUS_LU ALL;
+
+**** 03:23:12 Command completed successfully
+
+0005 	RECORD 1;
+
+**** 03:23:12 Starting record number set to  : 1
+
+0006 	SET RECORD VARTEXT "|";
+
+**** 03:23:12 Now set to read 'Variable-Length Text' records
+**** 03:23:12 Delimiter character(s) is set to '|'
+**** 03:23:12 Command completed successfully
+
+0007 	DEFINE
+     	 CUS_ID                        (VARCHAR(20))
+     ,HHLD_ID                       (VARCHAR(20))
+     ,FIRST_NAME                    (VARCHAR(120))
+     ,LAST_NAME                     (VARCHAR(120))
+     ,ADDRESS1                      (VARCHAR(240))
+     ,ADDRESS2                      (VARCHAR(240))
+     ,CITY                          (VARCHAR(120))
+     ,STATE_CDE                     (VARCHAR(20))
+     ,ZIP_CDE                       (VARCHAR(20))
+     ,ZIP4_CDE                      (VARCHAR(20))
+     ,FIRST_NAME_SCRBD              (VARCHAR(120))
+     ,LAST_NAME_SCRBD               (VARCHAR(120))
+     ,ADDRESS1_SCRBD                (VARCHAR(240))
+     ,ADDRESS2_SCRBD                (VARCHAR(240))
+     ,CITY_SCRBD                    (VARCHAR(120))
+     ,STATE_SCRBD                   (VARCHAR(20))
+     ,ZIP_CODE_SCRBD                (VARCHAR(20))
+     ,ZIP4_CODE_SCRBD               (VARCHAR(20))
+     ,ZIP_FULL_CDE_SCRBD            (VARCHAR(20))
+     ,NON_US_POSTAL_CDE             (VARCHAR(20))
+     ,COUNTRY_CDE                   (VARCHAR(6))
+     ,COUNTRY_CDE_SCRBD             (VARCHAR(6))
+     ,IS_ADDRESS_VALID_FLG          (VARCHAR(6))
+     ,IS_ADDRESS_LIKELY_VALID_FLG   (VARCHAR(6))
+     ,IS_EMAIL_VALID_FLG            (VARCHAR(6))
+     ,IS_PHONE_FOR_SMS_VALID_FLG    (VARCHAR(6))
+     ,PHONE_NUM                     (VARCHAR(30))
+     ,PHONE_TYP                     (VARCHAR(6))
+     ,EMAIL_ADDRESS                 (VARCHAR(250))
+     ,LYLTY_ID                      (VARCHAR(50))
+     ,GENDER_CDE                    (VARCHAR(6))
+     ,DIRECT_MAIL_CONSENT_FLG       (VARCHAR(6))
+     ,EMAIL_CONSENT_FLG             (VARCHAR(6))
+     ,SMS_CONSENT_FLG               (VARCHAR(6))
+     ,BIRTH_DT                      (VARCHAR(10))
+     ,DECEASED_FLG                  (VARCHAR(6))
+     ,ADDRESS_IS_PRISON_FLG         (VARCHAR(6))
+     ,ADD_DT                        (VARCHAR(10))
+     ,INTRODCTN_DT                  (VARCHAR(10))
+     ,LATITUDE                      (VARCHAR(11))
+     ,LONGITUDE                     (VARCHAR(11))
+     ,CLOSEST_LOC_ID                (VARCHAR(25))
+     ,DIST_TO_CLOSEST_LOC           (VARCHAR(11))
+     ,SECOND_CLOSEST_LOC_ID         (VARCHAR(25))
+     ,DIST_TO_SEC_CLOSEST_LOC       (VARCHAR(11))
+     ,PREFERRED_LOC_ID              (VARCHAR(25))
+     ,DIST_TO_PREFERRED_LOC         (VARCHAR(11))
+     ,PRIMARY_LOC_ID                (VARCHAR(25))
+     ,SECONDARY_LOC_ID              (VARCHAR(25))
+     ,LAST_TXN_DT                   (VARCHAR(10))
+     ,LAST_STR_PURCH_DT             (VARCHAR(10))
+     ,LAST_WEB_PURCH_DT             (VARCHAR(10))
+     ,HAS_PLCC_FLG                  (VARCHAR(6))
+     ,FIRST_TXN_LOC_ID              (VARCHAR(25))
+     ,FIRST_TXN_DT                  (VARCHAR(10))
+     ,BRAND_FIRST_TXN_DT            (VARCHAR(10))
+     ,ADS_DONOT_STATMNT_INS_IND     (VARCHAR(6))
+     ,ADS_DONOT_SELL_NAME_IND       (VARCHAR(6))
+     ,ADS_SPAM_IND                  (VARCHAR(6))
+     ,ADS_EMAIL_CHANGE_DT           (VARCHAR(10))
+     ,ADS_RTRN_MAIL_FLG             (VARCHAR(6))
+     ,GNDR_SHPNG_PREF_QTY           (VARCHAR(6))
+     ,GNDR_SHPNG_PREF_AMT           (VARCHAR(6))
+     ,AGE                           (VARCHAR(6))
+     ,AGE_QUALIFIER                 (VARCHAR(6))
+     ,IS_DM_MARKETABLE_FLG          (VARCHAR(6))
+     ,IS_EM_MARKETABLE_FLG          (VARCHAR(6))
+     ,IS_SMS_MARKETABLE_FLG         (VARCHAR(6))
+     ,RCD_TYP                       (VARCHAR(6))
+     ,EMAIL_CONSENT_DT              (VARCHAR(10))
+     ,SMS_CONSENT_DT                (VARCHAR(10))
+     ,DIRECT_MAIL_CONSENT_DT        (VARCHAR(10))
+     ,PREFERRED_CHNL                (VARCHAR(6))
+     ,DOMINANT_SHPNG_CHNL           (VARCHAR(6))
+     ,LAST_BROWSE_DT                (VARCHAR(10))
+     ,IS_LYLTY_MEMBER_FLG           (VARCHAR(6))
+     ,LYLTY_TIER                    (VARCHAR(6))
+     ,LYLTY_MEMBER_STTS             (VARCHAR(6))
+     ,LYLTY_ACCT_OPEN_DT            (VARCHAR(10))
+     ,LYLTY_ACCT_CLOSE_DT           (VARCHAR(10))
+     ,LYLTY_ACCT_ENROLL_DT          (VARCHAR(10))
+     ,NEXT_CONVRSN_STTS             (VARCHAR(20))
+     ,NCOA_LAST_CNG_DT              (VARCHAR(10))
+     ,LYLTY_ENRLMNT_SRC_ID          (VARCHAR(11))
+     ,LYLTY_ENRLMNT_LOC_ID          (VARCHAR(25))
+     ,PLCC_OPEN_DT                  (VARCHAR(10))
+     ,PLCC_CLOSE_DT                 (VARCHAR(10))
+     ,CS_AGENT_ID                   (VARCHAR(25))
+     ,LOC_ASSOCIATE_ID              (VARCHAR(25))
+     ,REGSTRTN_DEVICE_TYP_CDE_ID    (VARCHAR(6))
+     ,TERMNTN_REASN                 (VARCHAR(6))
+     ,LYLTY_ENRLMNT_SRC             (VARCHAR(6))
+     ,PFCOM_FLG                     (VARCHAR(4))
+     ,PFCOM_DT                      (VARCHAR(10))
+     ,PFCOM_LOC_ID                  (VARCHAR(25))
+     ,PFCOM_ASSOCIATE_ID            (VARCHAR(25))
+     ,PFCOM_CS_AGENT_ID             (VARCHAR(25))
+     ,PFCOM_SRC                     (VARCHAR(6))
+     ,PFCOM_DEVICE_TYP_CDE_ID       (VARCHAR(6))
+     ,PFCOM_RWD_FLG                 (VARCHAR(4))
+     ,PFUPD_DT                      (VARCHAR(10))
+     ,YRLY_PFUPD_DT                 (VARCHAR(10))
+     ,PFUPD_LOC_ID                  (VARCHAR(25))
+     ,PFUPD_ASSOCIATE_ID            (VARCHAR(25))
+     ,PFUPD_CS_AGENT_ID             (VARCHAR(25))
+     ,PFUPD_SRC                     (VARCHAR(6))
+     ,PFUPD_DEVICE_TYP_CDE_ID       (VARCHAR(6))
+     ,YRLY_PFUPD_DEVICE_TYP_CDE_ID  (VARCHAR(6))
+     ,SIGNUP_TYP                    (VARCHAR(4))
+     ,LYLTY_TIER_ID                 (VARCHAR(11))
+     ,TIER_FROM_DT                  (VARCHAR(10))
+     ,TIER_TO_DT                    (VARCHAR(10))
+     ,TIER_MOVE_REASN               (VARCHAR(6))
+     ,EMP_ID                        (VARCHAR(50))
+     ,IS_EMP_FLG                    (VARCHAR(4))
+     ,INGEST_DT                     (VARCHAR(10))
+     ,CC_FLG                        (VARCHAR(1))
+     ,RUN_DT                        (VARCHAR(10))
+     	FILE = /batch/ete/data/customer/customer/d_cus_lu_20201231025220.TXT ;
+
+**** 03:23:12 FDL4803 DEFINE statement processed
+
+0008 	BEGIN LOADING EXPDW_ETE_STG.STG_D_CUS_LU ERRORFILES EXPDW_ETE_STG.ERR1_D_C
+     US_LU, EXPDW_ETE_STG.ERR2_D_CUS_LU;
+
+**** 03:23:12 Session count 28 returned by the DBS overrides
+              user-requested session count
+**** 03:23:16 Number of FastLoad sessions requested = 28
+**** 03:23:16 Number of FastLoad sessions connected = 28
+**** 03:23:16 FDL4808 LOGON successful
+**** 03:23:17 Number of AMPs available: 80
+**** 03:23:17 BEGIN LOADING COMPLETE
+
+     ===================================================================
+     =                                                                 =
+     =          Insert Phase                                           =
+     =                                                                 =
+     ===================================================================
+
+0009 	INSERT INTO EXPDW_ETE_STG.STG_D_CUS_LU.*;
+
+**** 03:23:17 Duplicate element name - CUS_ID
+**** 03:23:17 Duplicate element name - HHLD_ID
+**** 03:23:17 Duplicate element name - FIRST_NAME
+**** 03:23:17 Duplicate element name - LAST_NAME
+**** 03:23:17 Duplicate element name - ADDRESS1
+**** 03:23:17 Duplicate element name - ADDRESS2
+**** 03:23:17 Duplicate element name - CITY
+**** 03:23:17 Duplicate element name - STATE_CDE
+**** 03:23:17 Duplicate element name - ZIP_CDE
+**** 03:23:17 Duplicate element name - ZIP4_CDE
+**** 03:23:17 Duplicate element name - FIRST_NAME_SCRBD
+**** 03:23:17 Duplicate element name - LAST_NAME_SCRBD
+**** 03:23:17 Duplicate element name - ADDRESS1_SCRBD
+**** 03:23:17 Duplicate element name - ADDRESS2_SCRBD
+**** 03:23:17 Duplicate element name - CITY_SCRBD
+**** 03:23:17 Duplicate element name - STATE_SCRBD
+**** 03:23:17 Duplicate element name - ZIP_CODE_SCRBD
+**** 03:23:17 Duplicate element name - ZIP4_CODE_SCRBD
+**** 03:23:17 Duplicate element name - ZIP_FULL_CDE_SCRBD
+**** 03:23:17 Duplicate element name - NON_US_POSTAL_CDE
+**** 03:23:17 Duplicate element name - COUNTRY_CDE
+**** 03:23:17 Duplicate element name - COUNTRY_CDE_SCRBD
+**** 03:23:17 Duplicate element name - IS_ADDRESS_VALID_FLG
+**** 03:23:17 Duplicate element name - IS_ADDRESS_LIKELY_VALID_FLG
+**** 03:23:17 Duplicate element name - IS_EMAIL_VALID_FLG
+**** 03:23:17 Duplicate element name - IS_PHONE_FOR_SMS_VALID_FLG
+**** 03:23:17 Duplicate element name - PHONE_NUM
+**** 03:23:17 Duplicate element name - PHONE_TYP
+**** 03:23:17 Duplicate element name - EMAIL_ADDRESS
+**** 03:23:17 Duplicate element name - LYLTY_ID
+**** 03:23:17 Duplicate element name - GENDER_CDE
+**** 03:23:17 Duplicate element name - DIRECT_MAIL_CONSENT_FLG
+**** 03:23:17 Duplicate element name - EMAIL_CONSENT_FLG
+**** 03:23:17 Duplicate element name - SMS_CONSENT_FLG
+**** 03:23:17 Duplicate element name - BIRTH_DT
+**** 03:23:17 Duplicate element name - DECEASED_FLG
+**** 03:23:17 Duplicate element name - ADDRESS_IS_PRISON_FLG
+**** 03:23:17 Duplicate element name - ADD_DT
+**** 03:23:17 Duplicate element name - INTRODCTN_DT
+**** 03:23:17 Duplicate element name - LATITUDE
+**** 03:23:17 Duplicate element name - LONGITUDE
+**** 03:23:17 Duplicate element name - CLOSEST_LOC_ID
+**** 03:23:17 Duplicate element name - DIST_TO_CLOSEST_LOC
+**** 03:23:17 Duplicate element name - SECOND_CLOSEST_LOC_ID
+**** 03:23:17 Duplicate element name - DIST_TO_SEC_CLOSEST_LOC
+**** 03:23:17 Duplicate element name - PREFERRED_LOC_ID
+**** 03:23:17 Duplicate element name - DIST_TO_PREFERRED_LOC
+**** 03:23:17 Duplicate element name - PRIMARY_LOC_ID
+**** 03:23:17 Duplicate element name - SECONDARY_LOC_ID
+**** 03:23:17 Duplicate element name - LAST_TXN_DT
+**** 03:23:17 Duplicate element name - LAST_STR_PURCH_DT
+**** 03:23:17 Duplicate element name - LAST_WEB_PURCH_DT
+**** 03:23:17 Duplicate element name - HAS_PLCC_FLG
+**** 03:23:17 Duplicate element name - FIRST_TXN_LOC_ID
+**** 03:23:17 Duplicate element name - FIRST_TXN_DT
+**** 03:23:17 Duplicate element name - BRAND_FIRST_TXN_DT
+**** 03:23:17 Duplicate element name - ADS_DONOT_STATMNT_INS_IND
+**** 03:23:17 Duplicate element name - ADS_DONOT_SELL_NAME_IND
+**** 03:23:17 Duplicate element name - ADS_SPAM_IND
+**** 03:23:17 Duplicate element name - ADS_EMAIL_CHANGE_DT
+**** 03:23:17 Duplicate element name - ADS_RTRN_MAIL_FLG
+**** 03:23:17 Duplicate element name - GNDR_SHPNG_PREF_QTY
+**** 03:23:17 Duplicate element name - GNDR_SHPNG_PREF_AMT
+**** 03:23:17 Duplicate element name - AGE
+**** 03:23:17 Duplicate element name - AGE_QUALIFIER
+**** 03:23:17 Duplicate element name - IS_DM_MARKETABLE_FLG
+**** 03:23:17 Duplicate element name - IS_EM_MARKETABLE_FLG
+**** 03:23:17 Duplicate element name - IS_SMS_MARKETABLE_FLG
+**** 03:23:17 Duplicate element name - RCD_TYP
+**** 03:23:17 Duplicate element name - EMAIL_CONSENT_DT
+**** 03:23:17 Duplicate element name - SMS_CONSENT_DT
+**** 03:23:17 Duplicate element name - DIRECT_MAIL_CONSENT_DT
+**** 03:23:17 Duplicate element name - PREFERRED_CHNL
+**** 03:23:17 Duplicate element name - DOMINANT_SHPNG_CHNL
+**** 03:23:17 Duplicate element name - LAST_BROWSE_DT
+**** 03:23:17 Duplicate element name - IS_LYLTY_MEMBER_FLG
+**** 03:23:17 Duplicate element name - LYLTY_TIER
+**** 03:23:17 Duplicate element name - LYLTY_MEMBER_STTS
+**** 03:23:17 Duplicate element name - LYLTY_ACCT_OPEN_DT
+**** 03:23:17 Duplicate element name - LYLTY_ACCT_CLOSE_DT
+**** 03:23:17 Duplicate element name - LYLTY_ACCT_ENROLL_DT
+**** 03:23:17 Duplicate element name - NEXT_CONVRSN_STTS
+**** 03:23:17 Duplicate element name - NCOA_LAST_CNG_DT
+**** 03:23:17 Duplicate element name - LYLTY_ENRLMNT_SRC_ID
+**** 03:23:17 Duplicate element name - LYLTY_ENRLMNT_LOC_ID
+**** 03:23:17 Duplicate element name - PLCC_OPEN_DT
+**** 03:23:17 Duplicate element name - PLCC_CLOSE_DT
+**** 03:23:17 Duplicate element name - CS_AGENT_ID
+**** 03:23:17 Duplicate element name - LOC_ASSOCIATE_ID
+**** 03:23:17 Duplicate element name - REGSTRTN_DEVICE_TYP_CDE_ID
+**** 03:23:17 Duplicate element name - TERMNTN_REASN
+**** 03:23:17 Duplicate element name - LYLTY_ENRLMNT_SRC
+**** 03:23:17 Duplicate element name - PFCOM_FLG
+**** 03:23:17 Duplicate element name - PFCOM_DT
+**** 03:23:17 Duplicate element name - PFCOM_LOC_ID
+**** 03:23:17 Duplicate element name - PFCOM_ASSOCIATE_ID
+**** 03:23:17 Duplicate element name - PFCOM_CS_AGENT_ID
+**** 03:23:17 Duplicate element name - PFCOM_SRC
+**** 03:23:17 Duplicate element name - PFCOM_DEVICE_TYP_CDE_ID
+**** 03:23:17 Duplicate element name - PFCOM_RWD_FLG
+**** 03:23:17 Duplicate element name - PFUPD_DT
+**** 03:23:17 Duplicate element name - YRLY_PFUPD_DT
+**** 03:23:17 Duplicate element name - PFUPD_LOC_ID
+**** 03:23:17 Duplicate element name - PFUPD_ASSOCIATE_ID
+**** 03:23:17 Duplicate element name - PFUPD_CS_AGENT_ID
+**** 03:23:17 Duplicate element name - PFUPD_SRC
+**** 03:23:17 Duplicate element name - PFUPD_DEVICE_TYP_CDE_ID
+**** 03:23:17 Duplicate element name - YRLY_PFUPD_DEVICE_TYP_CDE_ID
+**** 03:23:17 Duplicate element name - SIGNUP_TYP
+**** 03:23:17 Duplicate element name - LYLTY_TIER_ID
+**** 03:23:17 Duplicate element name - TIER_FROM_DT
+**** 03:23:17 Duplicate element name - TIER_TO_DT
+**** 03:23:17 Duplicate element name - TIER_MOVE_REASN
+**** 03:23:17 Duplicate element name - EMP_ID
+**** 03:23:17 Duplicate element name - IS_EMP_FLG
+**** 03:23:17 Duplicate element name - INGEST_DT
+**** 03:23:17 Duplicate element name - CC_FLG
+**** 03:23:17 Duplicate element name - RUN_DT
+**** 03:23:17 Number of recs/msg: 19
+**** 03:23:17 Starting to send to RDBMS with record 1
+**** 03:23:17 Sending row 98
+**** 03:23:17 Finished sending rows to the RDBMS
+
+**** 03:23:17 Acquisition Phase statistics:
+              Elapsed time: 00:00:00 (in hh:mm:ss)
+              CPU time:     0 Seconds
+              MB/sec:       N/A
+              MB/cpusec:    N/A
+
+     ===================================================================
+     =                                                                 =
+     =          End Loading Phase                                      =
+     =                                                                 =
+     ===================================================================
+
+0010 	END LOADING;
+
+**** 03:23:18 END LOADING COMPLETE
+
+     Total Records Read              =  98
+      - skipped by RECORD command    =  0
+      - sent to the RDBMS            =  98
+     Total Error Table 1             =  0  ---- Table has been dropped
+     Total Error Table 2             =  0  ---- Table has been dropped
+     Total Inserts Applied           =  98
+     Total Duplicate Rows            =  0
+
+     Start:   Thu Dec 31 03:23:18 2020
+     End  :   Thu Dec 31 03:23:18 2020
+
+**** 03:23:18 Application Phase statistics:
+              Elapsed time: 00:00:00 (in hh:mm:ss)
+
+0011 	.LOGOFF
+
+     ===================================================================
+     =                                                                 =
+     =          Logoff/Disconnect                                      =
+     =                                                                 =
+     ===================================================================
+
+**** 03:23:19 Logging off all sessions
+**** 03:23:20 Total processor time used = '1.24 Seconds'
+     .        Start : Thu Dec 31 03:23:11 2020
+     .        End   : Thu Dec 31 03:23:20 2020
+     .        Highest return code encountered = '0'.
+**** 03:23:20 FDL4818 FastLoad Terminated
+FORMATTED_LOG: END LOADING COMPLETE 98 0 98 0 0 98 0
+OUTPUT FROM fastloadlog_parse
+err1count =
+err2count=
+d_cus_ld 12/31/2020 03:23:20: set_activity_count
+d_cus_ld 12/31/2020 03:23:20: set_activity_count end
+d_cus_ld 12/31/2020 03:23:20: Source     : d_cus_lu_20201231025220.TXT
+d_cus_ld 12/31/2020 03:23:20: Destination: STG_D_CUS_LU
+d_cus_ld 12/31/2020 03:23:20: SQL Statistics:
+d_cus_ld 12/31/2020 03:23:20: NO OF ROWS INSERTED: 98
+d_cus_ld 12/31/2020 03:23:20: NO OF ROWS DELETED:  0
+d_cus_ld 12/31/2020 03:23:20: No OF ROWS UPDATED:  0
+Start:************************
+query_command : MERGE INTO EXPDW_ETE_DWH.DWH_C_AUDIT_LOG AS  A
+                   USING (
+    					 SELECT 1539 BATCH_ID 
+    							,505 JOB_ID
+    							,1 LEVEL
+    					 ) AS TMP
+    					 ON A.BATCH_ID = TMP.BATCH_ID
+    					  AND A.JOB_ID = TMP.JOB_ID
+    					  AND A.LEVEL = TMP.LEVEL
+    					 WHEN MATCHED THEN UPDATE
+            					 SET NUMBERS_OF_ROW_INSERTED = NUMBERS_OF_ROW_INSERTED+98
+    					 		    ,NUMBERS_OF_ROW_UPDATED  = NUMBERS_OF_ROW_UPDATED+0
+    					 		    ,NUMBERS_OF_ROW_DELETED  = NUMBERS_OF_ROW_DELETED+0
+    					 		    ,NUMBERS_OF_ROW_REJECTED = NUMBERS_OF_ROW_REJECTED+0
+									,AUDIT_TIMESTAMP = CURRENT_TIMESTAMP
+    					 WHEN NOT MATCHED THEN INSERT
+                   			   (	 BATCH_ID                
+    									,JOB_ID                  
+    									,JOB_NAME                
+    									,BUSINESS_DATE 
+                                        ,AUDIT_TIMESTAMP										
+    									,SOURCE        
+    									,SOURCE_COUNT            
+    									,TARGET         
+    									,NUMBERS_OF_ROW_INSERTED 
+    									,NUMBERS_OF_ROW_UPDATED  
+    									,NUMBERS_OF_ROW_DELETED  
+    									,NUMBERS_OF_ROW_REJECTED
+    									,LEVEL)
+    						VALUES(  TMP.BATCH_ID     
+    								,TMP.JOB_ID
+    								,'d_cus_ld'
+    								,CAST('2020-12-29' AS DATE FORMAT 'YYYY-MM-DD')
+									,CURRENT_TIMESTAMP
+    								,'d_cus_lu_20201231025220.TXT'
+    								,      98
+    								,'STG_D_CUS_LU'
+    								,98
+    								,0
+    								,0
+    								,0
+    								,TMP.LEVEL)
+    							
+END:************************
+
+d_cus_ld 12/31/2020 03:23:20: Err1 table count: 0
+d_cus_ld 12/31/2020 03:23:20: STG_D_CUS_LU loaded successfully
+d_cus_ld 12/31/2020 03:23:20: Creating Secondary Index for STG_D_CUS_LU
+Start:************************
+query_command : 
+	CREATE INDEX (HHLD_ID) ON EXPDW_ETE_STG.STG_D_CUS_LU;
+	
+END:************************
+
+d_cus_ld 12/31/2020 03:23:21: STG_D_CUS_LU Secondary Index created successfully
+d_cus_ld 12/31/2020 03:23:21: Setting bookmark value for the script in DWH_C_BATCH_LOG table
+Start:************************
+query_command : UPDATE EXPDW_ETE_DWH.DWH_C_BATCH_LOG
+                      SET BOOKMARK='AFTER_STG_LOAD'
+					  ,JOB_ID=505
+                      WHERE BATCH_ID=1539
+                       AND JOB_NAME = 'd_cus_ld'
+					   AND START_TIMESTAMP='2020-12-31 03:23:06.500000'
+                     
+END:************************
+
+
+
+==============================================================================================================================================
+====================================================  RUNNING CODES FOR BOOKMARK = AFTER_STG_LOAD  ================================================
+==============================================================================================================================================
+
+
+d_cus_ld 12/31/2020 03:23:21: Collecting Statistics for STG_D_CUS_LU
+Start:************************
+query_command : 
+	COLLECT STATS COLUMN(CUS_ID, INGEST_DT)
+		,COLUMN(HHLD_ID)
+	ON EXPDW_ETE_STG.STG_D_CUS_LU;
+	
+END:************************
+
+d_cus_ld 12/31/2020 03:23:21: STG_D_CUS_LU Statistics collected successfully
+d_cus_ld 12/31/2020 03:23:21: Setting bookmark value for the script in DWH_C_BATCH_LOG table
+Start:************************
+query_command : UPDATE EXPDW_ETE_DWH.DWH_C_BATCH_LOG
+                      SET BOOKMARK='AFTER_STG_COLLECT_STATS'
+					  ,JOB_ID=505
+                      WHERE BATCH_ID=1539
+                       AND JOB_NAME = 'd_cus_ld'
+					   AND START_TIMESTAMP='2020-12-31 03:23:06.500000'
+                     
+END:************************
+
+
+
+==============================================================================================================================================
+====================================================  RUNNING CODES FOR BOOKMARK = AFTER_STG_COLLECT_STATS  ================================================
+==============================================================================================================================================
+
+
+d_cus_ld 12/31/2020 03:23:21: Load into Temporary0 Table Started
+d_cus_ld 12/31/2020 03:23:21: Truncate Temporary0 Table
+d_cus_ld 12/31/2020 03:23:21: Truncating table TMP0_D_CUS_LU
+Start:************************
+query_command : DELETE FROM EXPDW_ETE_TMP.TMP0_D_CUS_LU ALL
+END:************************
+
+d_cus_ld 12/31/2020 03:23:22: TMP0_D_CUS_LU truncated successfully
+d_cus_ld 12/31/2020 03:23:22: Loading TMP0_D_CUS_LU
+Start:************************
+query_command : 
+	INSERT INTO EXPDW_ETE_TMP.TMP0_D_CUS_LU ( 
+		CUS_ID
+		,HHLD_KEY, FIRST_NAME, FIRST_NAME_SCRBD, LAST_NAME, LAST_NAME_SCRBD, ADDRESS1, ADDRESS1_SCRBD, ADDRESS2, ADDRESS2_SCRBD, CITY, CITY_SCRBD, STATE_CDE, STATE_SCRBD, ZIP_CDE, ZIP_CODE_SCRBD, ZIP4_CDE, ZIP4_CODE_SCRBD, ZIP_FULL_CDE_SCRBD, NON_US_POSTAL_CDE, COUNTRY_CDE, COUNTRY_CDE_SCRBD, NON_US_CUS_FLG, IS_ADDRESS_VALID_FLG, IS_ADDRESS_LIKELY_VALID_FLG, IS_EMAIL_VALID_FLG, IS_PHONE_FOR_SMS_VALID_FLG, PHONE_NUM, PHONE_TYP, EMAIL_ADDRESS, GENDER_CDE, DIRECT_MAIL_CONSENT_FLG, EMAIL_CONSENT_FLG, SMS_CONSENT_FLG, BIRTH_DT, AGE, AGE_GRP_CDE, AGE_QUALIFIER, DECEASED_FLG, ADDRESS_IS_PRISON_FLG, ADD_DT, INTRODCTN_DT, LATITUDE, LONGITUDE, CLOSEST_LOC_KEY, DIST_TO_CLOSEST_LOC, SECOND_CLOSEST_LOC_KEY, DIST_TO_SEC_CLOSEST_LOC, PREFERRED_LOC_KEY, DIST_TO_PREFERRED_LOC, FIRST_TXN_DT, FIRST_TXN_LOC_KEY, BRAND_FIRST_TXN_DT, ADS_DONOT_STATMNT_INS_IND, ADS_DONOT_SELL_NAME_IND, ADS_SPAM_IND, ADS_EMAIL_CHANGE_DT, ADS_RTRN_MAIL_FLG, IS_DM_MARKETABLE_FLG, IS_EM_MARKETABLE_FLG, IS_SMS_MARKETABLE_FLG, RCD_TYP, EMAIL_CONSENT_DT, SMS_CONSENT_DT, DIRECT_MAIL_CONSENT_DT, LYLTY_ID, HAS_PLCC_FLG, IS_LYLTY_MEMBER_FLG, IS_ALIST_FLG, LYLTY_TIER, LYLTY_MEMBER_STTS, LYLTY_ACCT_OPEN_DT, LYLTY_ACCT_CLOSE_DT, LYLTY_ACCT_ENROLL_DT, NEXT_CONVRSN_STTS, NCOA_LAST_CNG_DT, LYLTY_ENRLMNT_LOC_KEY, LYLTY_ENRLMNT_SRC_KEY, PLCC_OPEN_DT, PLCC_CLOSE_DT, PRIMARY_LOC_KEY, SECONDARY_LOC_KEY, LAST_TXN_DT, LAST_STR_PURCH_DT, LAST_WEB_PURCH_DT, GNDR_SHPNG_PREF_QTY, GNDR_SHPNG_PREF_AMT, PREFERRED_CHNL, DOMINANT_SHPNG_CHNL, LAST_BROWSE_DT, CS_AGENT_KEY, EMP_AGG_KEY, LOC_ASSOCIATE_KEY, REGSTRTN_DEVICE_TYP_CDE_KEY, REGSTRTN_DEVICE_TYP_ID, REGSTRTN_CHNL_SUB_TYP_ID, REGSTRTN_CHNL_ID, TERMNTN_REASN, LYLTY_ENRLMNT_SRC, PFCOM_FLG, PFCOM_DT, PFCOM_LOC_KEY, PFCOM_ASSOCIATE_KEY, PFCOM_CS_AGENT_KEY, PFCOM_EMP_AGG_KEY, PFCOM_SRC, PFCOM_DEVICE_TYP_CDE_KEY, PFCOM_DEVICE_TYP_ID, PFCOM_CHNL_SUB_TYP_ID, PFCOM_CHNL_ID, PFCOM_RWD_FLG, PFUPD_DT, YRLY_PFUPD_DT, PFUPD_LOC_KEY, PFUPD_ASSOCIATE_KEY, PFUPD_CS_AGENT_KEY, PFUPD_EMP_AGG_KEY, PFUPD_SRC, PFUPD_DEVICE_TYP_CDE_KEY, PFUPD_DEVICE_TYP_ID, PFUPD_CHNL_SUB_TYP_ID, PFUPD_CHNL_ID, YRLY_PFUPD_DEVICE_TYP_CDE_KEY, YRLY_PFUPD_DEVICE_TYP_ID, YRLY_PFUPD_CHNL_SUB_TYP_ID, YRLY_PFUPD_CHNL_ID, SIGNUP_TYP, LYLTY_TIER_KEY, TIER_FROM_DT, TIER_TO_DT, TIER_MOVE_REASN, EMP_KEY, IS_EMP_FLG
+		,HHLD_HIST_KEY
+		,HHLD_ID	
+		,CLOSEST_LOC_ID
+		,SECOND_CLOSEST_LOC_ID
+		,PREFERRED_LOC_ID
+		,FIRST_TXN_LOC_ID
+		,LYLTY_ENRLMNT_LOC_ID
+		,LYLTY_ENRLMNT_SRC_ID
+		,PRIMARY_LOC_ID
+		,SECONDARY_LOC_ID
+		,CS_AGENT_ID
+		,LOC_ASSOCIATE_ID
+		,REGSTRTN_DEVICE_TYP_CDE_ID
+		,PFCOM_LOC_ID
+		,PFCOM_ASSOCIATE_ID
+		,PFCOM_CS_AGENT_ID
+		,PFCOM_DEVICE_TYP_CDE_ID
+		,PFUPD_LOC_ID
+		,PFUPD_ASSOCIATE_ID
+		,PFUPD_CS_AGENT_ID
+		,PFUPD_DEVICE_TYP_CDE_ID
+		,YRLY_PFUPD_DEVICE_TYP_CDE_ID
+		,LYLTY_TIER_ID
+		,EMP_ID
+		,EMP_AGG_ID
+		,PFCOM_EMP_AGG_ID
+		,PFUPD_EMP_AGG_ID		
+		,INGEST_DT
+		,NEXT_INGEST_DT
+	)
+	SELECT SRC.CUS_ID
+		,COALESCE(HHLD.HHLD_KEY,-1)
+		,SRC.FIRST_NAME
+		,SRC.FIRST_NAME_SCRBD
+		,SRC.LAST_NAME
+		,SRC.LAST_NAME_SCRBD
+		,SRC.ADDRESS1
+		,SRC.ADDRESS1_SCRBD
+		,SRC.ADDRESS2
+		,SRC.ADDRESS2_SCRBD
+		,SRC.CITY
+		,SRC.CITY_SCRBD
+		,SRC.STATE_CDE
+		,SRC.STATE_SCRBD
+		,SRC.ZIP_CDE
+		,SRC.ZIP_CODE_SCRBD
+		,SRC.ZIP4_CDE
+		,SRC.ZIP4_CODE_SCRBD
+		,SRC.ZIP_FULL_CDE_SCRBD
+		,SRC.NON_US_POSTAL_CDE
+		,SRC.COUNTRY_CDE
+		,SRC.COUNTRY_CDE_SCRBD
+		,CASE 
+			WHEN TRIM(SRC.COUNTRY_CDE)='US' OR TRIM(SRC.COUNTRY_CDE)='USA'
+				THEN 0
+				ELSE 1
+			END NON_US_CUS_FLG
+		,SRC.IS_ADDRESS_VALID_FLG
+		,SRC.IS_ADDRESS_LIKELY_VALID_FLG
+		,SRC.IS_EMAIL_VALID_FLG
+		,SRC.IS_PHONE_FOR_SMS_VALID_FLG
+		,SRC.PHONE_NUM
+		,SRC.PHONE_TYP
+		,SRC.EMAIL_ADDRESS
+		,SRC.GENDER_CDE
+		,SRC.DIRECT_MAIL_CONSENT_FLG
+		,SRC.EMAIL_CONSENT_FLG
+		,SRC.SMS_CONSENT_FLG
+		,SRC.BIRTH_DT
+		,SRC.AGE
+		,AGEGRP.AGE_STRAT_CDE AGE_GRP_CDE
+		,SRC.AGE_QUALIFIER
+		,SRC.DECEASED_FLG
+		,SRC.ADDRESS_IS_PRISON_FLG
+		,SRC.ADD_DT
+		,SRC.INTRODCTN_DT
+		,SRC.LATITUDE
+		,SRC.LONGITUDE
+		,COALESCE(CL.LOC_KEY,-1) CLOSEST_LOC_KEY
+		,SRC.DIST_TO_CLOSEST_LOC
+		,COALESCE(SCL.LOC_KEY,-1) SECONDARY_LOC_KEY
+		,SRC.DIST_TO_SEC_CLOSEST_LOC
+		,COALESCE(PL.LOC_KEY,-1) PREFERRED_LOC_KEY
+		,SRC.DIST_TO_PREFERRED_LOC
+		,SRC.FIRST_TXN_DT
+		,COALESCE(FTL.LOC_KEY,-1) FIRST_TXN_LOC_KEY
+		,SRC.BRAND_FIRST_TXN_DT
+		,SRC.ADS_DONOT_STATMNT_INS_IND
+		,SRC.ADS_DONOT_SELL_NAME_IND
+		,SRC.ADS_SPAM_IND
+		,SRC.ADS_EMAIL_CHANGE_DT
+		,SRC.ADS_RTRN_MAIL_FLG
+		,SRC.IS_DM_MARKETABLE_FLG
+		,SRC.IS_EM_MARKETABLE_FLG
+		,SRC.IS_SMS_MARKETABLE_FLG
+		,SRC.RCD_TYP
+		,SRC.EMAIL_CONSENT_DT
+		,SRC.SMS_CONSENT_DT
+		,SRC.DIRECT_MAIL_CONSENT_DT
+		,SRC.LYLTY_ID
+		,SRC.HAS_PLCC_FLG
+		,SRC.IS_LYLTY_MEMBER_FLG
+		,CASE 
+			WHEN SRC.LYLTY_TIER=30
+				THEN 1
+				ELSE 0
+			END IS_ALIST_FLG
+		,SRC.LYLTY_TIER 
+		,SRC.LYLTY_MEMBER_STTS
+		,SRC.LYLTY_ACCT_OPEN_DT
+		,SRC.LYLTY_ACCT_CLOSE_DT
+		,SRC.LYLTY_ACCT_ENROLL_DT
+		,SRC.NEXT_CONVRSN_STTS
+		,SRC.NCOA_LAST_CNG_DT
+		,COALESCE(LYLLOC.LOC_KEY,-1) LYLTY_ENRLMNT_LOC_KEY
+		,COALESCE(LYLSRC.LYLTY_ENRLMNT_SRC_KEY,-1) LYLTY_ENRLMNT_SRC_KEY
+		,SRC.PLCC_OPEN_DT
+		,SRC.PLCC_CLOSE_DT
+		,COALESCE(PRILOC.LOC_KEY,-1) PRIMARY_LOC_KEY
+		,COALESCE(SECLOC.LOC_KEY,-1) SECONDARY_LOC_KEY
+		,SRC.LAST_TXN_DT
+		,SRC.LAST_STR_PURCH_DT
+		,SRC.LAST_WEB_PURCH_DT
+		,SRC.GNDR_SHPNG_PREF_QTY
+		,SRC.GNDR_SHPNG_PREF_AMT
+		,SRC.PREFERRED_CHNL
+		,SRC.DOMINANT_SHPNG_CHNL
+		,SRC.LAST_BROWSE_DT
+		,COALESCE(CSA_NEW_REG.CS_AGENT_KEY,-1) CS_AGENT_KEY
+		,-1 EMP_AGG_KEY
+		,COALESCE(EMP_NEW_REG.EMP_KEY,-1) LOC_ASSOCIATE_KEY
+		,COALESCE(REG_DEV_TYP.DEVICE_TYP_CDE_KEY,-1) REGSTRTN_DEVICE_TYP_CDE_KEY
+		,COALESCE(REG_DEV_TYP.DEVICE_TYP_ID,-1) REGSTRTN_DEVICE_TYP_ID
+		,COALESCE(REG_DEV_TYP.CHNL_SUB_TYP_ID,-1) REGSTRTN_CHNL_SUB_TYP_ID
+		,COALESCE(REG_DEV_TYP.CHNL_ID,-1) REGSTRTN_CHNL_ID
+		,SRC.TERMNTN_REASN
+		,SRC.LYLTY_ENRLMNT_SRC
+		,SRC.PFCOM_FLG
+		,SRC.PFCOM_DT
+		,COALESCE(LOC_PFCOM.LOC_KEY,-1) PFCOM_LOC_KEY
+		,COALESCE(EMP_PFCOM.EMP_KEY,-1) PFCOM_ASSOCIATE_KEY
+		,COALESCE(CSA_PFCOM.CS_AGENT_KEY,-1) PFCOM_CS_AGENT_KEY
+		,-1 PFCOM_EMP_AGG_KEY
+		,SRC.PFCOM_SRC
+		,COALESCE(PFCOM_DEV_TYP.DEVICE_TYP_CDE_KEY,-1) PFCOM_DEVICE_TYP_CDE_KEY
+		,COALESCE(PFCOM_DEV_TYP.DEVICE_TYP_ID,-1) PFCOM_DEVICE_TYP_ID
+		,COALESCE(PFCOM_DEV_TYP.CHNL_SUB_TYP_ID,-1) PFCOM_CHNL_SUB_TYP_ID
+		,COALESCE(PFCOM_DEV_TYP.CHNL_ID,-1) PFCOM_CHNL_ID
+		,SRC.PFCOM_RWD_FLG
+		,SRC.PFUPD_DT
+		,SRC.YRLY_PFUPD_DT
+		,COALESCE(LOC_PFUPD.LOC_KEY,-1) PFUPD_LOC_KEY
+		,COALESCE(EMP_PFUPD.EMP_KEY,-1) PFUPD_ASSOCIATE_KEY
+		,COALESCE(CSA_PFUPD.CS_AGENT_KEY,-1) PFUPD_CS_AGENT_KEY
+		,-1 PFUPD_EMP_AGG_KEY
+		,SRC.PFUPD_SRC
+		,COALESCE(PFUPD_DEV_TYP.DEVICE_TYP_CDE_KEY,-1) PFUPD_DEVICE_TYP_CDE_KEY
+		,COALESCE(PFUPD_DEV_TYP.DEVICE_TYP_ID,-1) PFUPD_DEVICE_TYP_ID
+		,COALESCE(PFUPD_DEV_TYP.CHNL_SUB_TYP_ID,-1) PFUPD_CHNL_SUB_TYP_ID
+		,COALESCE(PFUPD_DEV_TYP.CHNL_ID,-1) PFUPD_CHNL_ID
+		,COALESCE(YRLY_PFUPD_DEV_TYP.DEVICE_TYP_CDE_KEY,-1) YRLY_PFUPD_DEVICE_TYP_CDE_KEY
+		,COALESCE(YRLY_PFUPD_DEV_TYP.DEVICE_TYP_ID,-1) YRLY_PFUPD_DEVICE_TYP_ID
+		,COALESCE(YRLY_PFUPD_DEV_TYP.CHNL_SUB_TYP_ID,-1) YRLY_PFUPD_CHNL_SUB_TYP_ID
+		,COALESCE(YRLY_PFUPD_DEV_TYP.CHNL_ID,-1) YRLY_PFUPD_CHNL_ID
+		,SRC.SIGNUP_TYP
+		,COALESCE(LYLTY_TIER.TIER_KEY,-1) LYLTY_TIER_KEY
+		,SRC.TIER_FROM_DT
+		,SRC.TIER_TO_DT
+		,SRC.TIER_MOVE_REASN
+		,COALESCE(EMP.EMP_KEY,-1) EMP_KEY
+		,IS_EMP_FLG
+		,COALESCE(HHLD_HIST.HHLD_HIST_KEY, -1) HHLD_HIST_KEY
+		,SRC.HHLD_ID
+		,TRIM(SRC.CLOSEST_LOC_ID)
+		,TRIM(SRC.SECOND_CLOSEST_LOC_ID)
+		,TRIM(SRC.PREFERRED_LOC_ID)
+		,TRIM(SRC.FIRST_TXN_LOC_ID)
+		,TRIM(SRC.LYLTY_ENRLMNT_LOC_ID)
+		,SRC.LYLTY_ENRLMNT_SRC_ID
+		,TRIM(SRC.PRIMARY_LOC_ID)
+		,TRIM(SRC.SECONDARY_LOC_ID)
+		,SRC.CS_AGENT_ID
+		,SRC.LOC_ASSOCIATE_ID
+		,SRC.REGSTRTN_DEVICE_TYP_CDE_ID
+		,SRC.PFCOM_LOC_ID
+		,SRC.PFCOM_ASSOCIATE_ID
+		,SRC.PFCOM_CS_AGENT_ID
+		,SRC.PFCOM_DEVICE_TYP_CDE_ID
+		,SRC.PFUPD_LOC_ID
+		,SRC.PFUPD_ASSOCIATE_ID
+		,SRC.PFUPD_CS_AGENT_ID
+		,SRC.PFUPD_DEVICE_TYP_CDE_ID
+		,SRC.YRLY_PFUPD_DEVICE_TYP_CDE_ID
+		,SRC.LYLTY_TIER_ID		
+		,SRC.EMP_ID
+		,TRIM(COALESCE('CSA-'||SRC.CS_AGENT_ID,'EMP-'||LOC_ASSOCIATE_ID)) EMP_AGG_ID
+		,TRIM(COALESCE('CSA-'||PFCOM_CS_AGENT_ID,'EMP-'||PFCOM_ASSOCIATE_ID)) PFCOM_EMP_AGG_ID
+		,TRIM(COALESCE('CSA-'||PFUPD_ASSOCIATE_ID,'EMP-'||PFUPD_ASSOCIATE_ID)) PFUPD_EMP_AGG_ID
+		,SRC.INGEST_DT
+		,COALESCE(
+			MIN(SRC.INGEST_DT) OVER (
+				PARTITION BY SRC.CUS_ID 
+				ORDER BY SRC.INGEST_DT ROWS BETWEEN 1 FOLLOWING 
+					AND 1 FOLLOWING
+			), 
+			CAST('9999-12-31' AS DATE FORMAT 'YYYY-MM-DD')
+		) AS NEXT_INGEST_DT		
+	FROM EXPDW_ETE_STG.STG_D_CUS_LU SRC
+	LEFT OUTER JOIN (
+		SELECT HHLD_KEY
+			,HHLD_ID 
+		FROM EXPDW_ETE_DWH_V.V_DWH_D_CUS_HHLD_LU
+	) HHLD ON SRC.HHLD_ID=HHLD.HHLD_ID
+		AND SRC.CUS_ID<>-1
+	LEFT OUTER JOIN (
+		SELECT HHLD_HIST_KEY 
+			,HHLD_ID
+			,EFF_FROM_DT
+			,EFF_TO_DT
+		FROM EXPDW_ETE_DWH_V.V_DWH_D_CUS_HHLD_HIST_LU
+	) HHLD_HIST ON SRC.HHLD_ID=HHLD_HIST.HHLD_ID 
+		AND SRC.INGEST_DT BETWEEN HHLD_HIST.EFF_FROM_DT AND HHLD_HIST.EFF_TO_DT
+	LEFT OUTER JOIN EXPDW_ETE_DWH_V.DV_DWH_D_CUS_AGE_STRAT_CDE_LU AGEGRP 
+		ON SRC.AGE BETWEEN AGEGRP.STRAT_MIN_VAL AND AGEGRP.STRAT_MAX_VAL
+	LEFT OUTER JOIN (
+		SELECT LOC_KEY
+			,LOC_ID
+		FROM EXPDW_ETE_DWH_V.V_DWH_D_ORG_LOC_LU
+	)CL	ON TRIM(SRC.CLOSEST_LOC_ID) = CL.LOC_ID
+	LEFT OUTER JOIN (
+		SELECT LOC_KEY
+			,LOC_ID
+		FROM EXPDW_ETE_DWH_V.V_DWH_D_ORG_LOC_LU
+	) SCL ON TRIM(SRC.SECOND_CLOSEST_LOC_ID) = SCL.LOC_ID
+	LEFT OUTER JOIN (
+		SELECT LOC_KEY
+			,LOC_ID
+		FROM EXPDW_ETE_DWH_V.V_DWH_D_ORG_LOC_LU
+	) PL ON TRIM(SRC.PREFERRED_LOC_ID) = PL.LOC_ID
+	LEFT OUTER JOIN (
+		SELECT LOC_KEY
+			,LOC_ID
+		FROM EXPDW_ETE_DWH_V.V_DWH_D_ORG_LOC_LU
+	) FTL ON TRIM(SRC.FIRST_TXN_LOC_ID) = FTL.LOC_ID
+	LEFT OUTER JOIN (
+		SELECT LOC_KEY
+			,LOC_ID
+		FROM EXPDW_ETE_DWH_V.V_DWH_D_ORG_LOC_LU
+	) LYLLOC ON TRIM(SRC.LYLTY_ENRLMNT_LOC_ID) = LYLLOC.LOC_ID
+	LEFT OUTER JOIN (
+		SELECT LYLTY_ENRLMNT_SRC_KEY
+			,LYLTY_ENRLMNT_SRC_ID
+		FROM EXPDW_ETE_DWH_V.V_DWH_D_CUS_LYLTY_ENRLMNT_SRC_LU
+	) LYLSRC ON SRC.LYLTY_ENRLMNT_SRC_ID = LYLSRC.LYLTY_ENRLMNT_SRC_ID
+	LEFT OUTER JOIN (
+		SELECT LOC_KEY
+			,LOC_ID
+		FROM EXPDW_ETE_DWH_V.V_DWH_D_ORG_LOC_LU
+	) PRILOC ON TRIM(SRC.PRIMARY_LOC_ID) = PRILOC.LOC_ID
+	LEFT OUTER JOIN (
+		SELECT LOC_KEY
+			,LOC_ID
+		FROM EXPDW_ETE_DWH_V.V_DWH_D_ORG_LOC_LU
+	) SECLOC ON TRIM(SRC.SECONDARY_LOC_ID) = SECLOC.LOC_ID
+	LEFT OUTER JOIN (
+		SELECT CS_AGENT_KEY
+			,CS_AGENT_ID
+		FROM EXPDW_ETE_DWH_V.V_DWH_D_CUS_CS_AGENT_LU
+	) CSA_NEW_REG ON SRC.CS_AGENT_ID=CSA_NEW_REG.CS_AGENT_ID
+	LEFT OUTER JOIN (
+		SELECT EMP_KEY
+			,EMP_ID
+		FROM EXPDW_ETE_DWH_V.V_DWH_D_EMP_LU
+	) EMP_NEW_REG ON SRC.LOC_ASSOCIATE_ID=EMP_NEW_REG.EMP_ID	
+	LEFT OUTER JOIN (
+		SELECT DEVICE_TYP_CDE_KEY
+			,DEVICE_TYP_CDE_ID
+			,DEVICE_TYP_ID
+			,CHNL_SUB_TYP_ID
+			,CHNL_ID		
+		FROM EXPDW_ETE_DWH_V.V_DWH_D_CUS_DEVICE_TYP_LU
+	) REG_DEV_TYP ON SRC.REGSTRTN_DEVICE_TYP_CDE_ID=REG_DEV_TYP.DEVICE_TYP_CDE_ID
+	LEFT OUTER JOIN (
+		SELECT LOC_KEY
+			,LOC_ID
+		FROM EXPDW_ETE_DWH_V.V_DWH_D_ORG_LOC_LU
+	) LOC_PFCOM	ON SRC.PFCOM_LOC_ID=LOC_PFCOM.LOC_ID
+	LEFT OUTER JOIN (
+		SELECT EMP_KEY
+			,EMP_ID
+		FROM EXPDW_ETE_DWH_V.V_DWH_D_EMP_LU
+	) EMP_PFCOM ON SRC.PFCOM_ASSOCIATE_ID=EMP_PFCOM.EMP_ID
+	LEFT OUTER JOIN (
+		SELECT CS_AGENT_KEY
+			,CS_AGENT_ID
+		FROM EXPDW_ETE_DWH_V.V_DWH_D_CUS_CS_AGENT_LU
+	) CSA_PFCOM ON SRC.PFCOM_CS_AGENT_ID=CSA_PFCOM.CS_AGENT_ID
+	LEFT OUTER JOIN (
+		SELECT DEVICE_TYP_CDE_KEY
+			,DEVICE_TYP_CDE_ID
+			,DEVICE_TYP_ID
+			,CHNL_SUB_TYP_ID
+			,CHNL_ID		
+		FROM EXPDW_ETE_DWH_V.V_DWH_D_CUS_DEVICE_TYP_LU
+	) PFCOM_DEV_TYP ON SRC.PFCOM_DEVICE_TYP_CDE_ID=PFCOM_DEV_TYP.DEVICE_TYP_CDE_ID
+	LEFT OUTER JOIN (
+		SELECT LOC_KEY
+			,LOC_ID
+		FROM EXPDW_ETE_DWH_V.V_DWH_D_ORG_LOC_LU
+	) LOC_PFUPD ON SRC.PFUPD_LOC_ID=LOC_PFUPD.LOC_ID
+	LEFT OUTER JOIN (
+		SELECT EMP_KEY
+			,EMP_ID
+		FROM EXPDW_ETE_DWH_V.V_DWH_D_EMP_LU
+	) EMP_PFUPD ON SRC.PFUPD_ASSOCIATE_ID=EMP_PFUPD.EMP_ID
+	LEFT OUTER JOIN (
+		SELECT CS_AGENT_KEY
+			,CS_AGENT_ID
+		FROM EXPDW_ETE_DWH_V.V_DWH_D_CUS_CS_AGENT_LU
+	) CSA_PFUPD	ON SRC.PFUPD_CS_AGENT_ID=CSA_PFUPD.CS_AGENT_ID
+	LEFT OUTER JOIN (
+		SELECT DEVICE_TYP_CDE_KEY
+			,DEVICE_TYP_CDE_ID
+			,DEVICE_TYP_ID
+			,CHNL_SUB_TYP_ID
+			,CHNL_ID		
+		FROM EXPDW_ETE_DWH_V.V_DWH_D_CUS_DEVICE_TYP_LU
+	) PFUPD_DEV_TYP ON SRC.PFUPD_DEVICE_TYP_CDE_ID=PFUPD_DEV_TYP.DEVICE_TYP_CDE_ID
+	LEFT OUTER JOIN (
+		SELECT DEVICE_TYP_CDE_KEY
+			,DEVICE_TYP_CDE_ID
+			,DEVICE_TYP_ID
+			,CHNL_SUB_TYP_ID
+			,CHNL_ID		
+		FROM EXPDW_ETE_DWH_V.V_DWH_D_CUS_DEVICE_TYP_LU
+	) YRLY_PFUPD_DEV_TYP ON SRC.PFUPD_DEVICE_TYP_CDE_ID=YRLY_PFUPD_DEV_TYP.DEVICE_TYP_CDE_ID	
+	LEFT OUTER JOIN (
+		SELECT TIER_KEY
+			,TIER_ID
+		FROM EXPDW_ETE_DWH_V.V_DWH_D_CUS_TIER_LU
+	) LYLTY_TIER ON SRC.LYLTY_TIER_ID=LYLTY_TIER.TIER_ID
+	LEFT OUTER JOIN (
+		SELECT EMP_KEY
+			,EMP_ID
+		FROM EXPDW_ETE_DWH_V.V_DWH_D_EMP_LU
+	) EMP ON SRC.EMP_ID=EMP.EMP_ID;
+	
+END:************************
+
+d_cus_ld 12/31/2020 03:25:07: TMP0_D_CUS_LU loaded successfully
+d_cus_ld 12/31/2020 03:25:07: set_activity_count
+d_cus_ld 12/31/2020 03:25:07: set_activity_count end
+Start:************************
+query_command : SELECT COUNT(*) FROM EXPDW_ETE_STG.STG_D_CUS_LU
+END:************************
+
+d_cus_ld 12/31/2020 03:25:08: Source     : STG_D_CUS_LU
+d_cus_ld 12/31/2020 03:25:08: Destination: TMP0_D_CUS_LU
+d_cus_ld 12/31/2020 03:25:08: SQL Statistics:
+d_cus_ld 12/31/2020 03:25:08: NO OF ROWS INSERTED: 98
+d_cus_ld 12/31/2020 03:25:08: NO OF ROWS DELETED:  0
+d_cus_ld 12/31/2020 03:25:08: No OF ROWS UPDATED:  0
+Start:************************
+query_command : MERGE INTO EXPDW_ETE_DWH.DWH_C_AUDIT_LOG AS  A
+                   USING (
+    					 SELECT 1539 BATCH_ID 
+    							,505 JOB_ID
+    							,2 LEVEL
+    					 ) AS TMP
+    					 ON A.BATCH_ID = TMP.BATCH_ID
+    					  AND A.JOB_ID = TMP.JOB_ID
+    					  AND A.LEVEL = TMP.LEVEL
+    					 WHEN MATCHED THEN UPDATE
+            					 SET NUMBERS_OF_ROW_INSERTED = NUMBERS_OF_ROW_INSERTED+98
+    					 		    ,NUMBERS_OF_ROW_UPDATED  = NUMBERS_OF_ROW_UPDATED+0
+    					 		    ,NUMBERS_OF_ROW_DELETED  = NUMBERS_OF_ROW_DELETED+0
+    					 		    ,NUMBERS_OF_ROW_REJECTED = NUMBERS_OF_ROW_REJECTED+0
+									,AUDIT_TIMESTAMP = CURRENT_TIMESTAMP
+    					 WHEN NOT MATCHED THEN INSERT
+                   			   (	 BATCH_ID                
+    									,JOB_ID                  
+    									,JOB_NAME                
+    									,BUSINESS_DATE 
+                                        ,AUDIT_TIMESTAMP										
+    									,SOURCE        
+    									,SOURCE_COUNT            
+    									,TARGET         
+    									,NUMBERS_OF_ROW_INSERTED 
+    									,NUMBERS_OF_ROW_UPDATED  
+    									,NUMBERS_OF_ROW_DELETED  
+    									,NUMBERS_OF_ROW_REJECTED
+    									,LEVEL)
+    						VALUES(  TMP.BATCH_ID     
+    								,TMP.JOB_ID
+    								,'d_cus_ld'
+    								,CAST('2020-12-29' AS DATE FORMAT 'YYYY-MM-DD')
+									,CURRENT_TIMESTAMP
+    								,'STG_D_CUS_LU'
+    								,         98
+    								,'TMP0_D_CUS_LU'
+    								,98
+    								,0
+    								,0
+    								,0
+    								,TMP.LEVEL)
+    							
+END:************************
+
+d_cus_ld 12/31/2020 03:25:08: Setting bookmark value for the script in DWH_C_BATCH_LOG table
+Start:************************
+query_command : UPDATE EXPDW_ETE_DWH.DWH_C_BATCH_LOG
+                      SET BOOKMARK='AFTER_LOAD_TEMP0_TABLE'
+					  ,JOB_ID=505
+                      WHERE BATCH_ID=1539
+                       AND JOB_NAME = 'd_cus_ld'
+					   AND START_TIMESTAMP='2020-12-31 03:23:06.500000'
+                     
+END:************************
+
+
+
+==============================================================================================================================================
+====================================================  RUNNING CODES FOR BOOKMARK = AFTER_LOAD_TEMP0_TABLE  ================================================
+==============================================================================================================================================
+
+
+d_cus_ld 12/31/2020 03:25:08: Update Temp0 Table Started
+Start:************************
+query_command : 
+	UPDATE TMP
+	FROM EXPDW_ETE_TMP.TMP0_D_CUS_LU TMP
+		, EXPDW_ETE_DWH_V.V_DWH_D_EMP_AGG_LU LU
+	SET EMP_AGG_KEY=LU.EMP_AGG_KEY
+	WHERE TMP.EMP_AGG_ID=LU.EMP_AGG_ID;
+	
+END:************************
+
+d_cus_ld 12/31/2020 03:25:09: TMP0_D_CUS_LU loaded successfully
+d_cus_ld 12/31/2020 03:25:09: set_activity_count
+d_cus_ld 12/31/2020 03:25:09: set_activity_count end
+d_cus_ld 12/31/2020 03:25:09: NO OF ROWS UPDATED: 1
+d_cus_ld 12/31/2020 03:25:09: Setting bookmark value for the script in DWH_C_BATCH_LOG table
+Start:************************
+query_command : UPDATE EXPDW_ETE_DWH.DWH_C_BATCH_LOG
+                      SET BOOKMARK='AFTER_UPDATE_TEMP0_TABLE_1'
+					  ,JOB_ID=505
+                      WHERE BATCH_ID=1539
+                       AND JOB_NAME = 'd_cus_ld'
+					   AND START_TIMESTAMP='2020-12-31 03:23:06.500000'
+                     
+END:************************
+
+
+
+==============================================================================================================================================
+====================================================  RUNNING CODES FOR BOOKMARK = AFTER_UPDATE_TEMP0_TABLE_1  ================================================
+==============================================================================================================================================
+
+
+d_cus_ld 12/31/2020 03:25:09: Update Temp0 Table Started
+Start:************************
+query_command : 
+	UPDATE TMP
+	FROM EXPDW_ETE_TMP.TMP0_D_CUS_LU TMP
+		, EXPDW_ETE_DWH_V.V_DWH_D_EMP_AGG_LU LU
+	SET PFCOM_EMP_AGG_KEY=LU.EMP_AGG_KEY
+	WHERE TMP.PFCOM_EMP_AGG_ID=LU.EMP_AGG_ID;
+	
+END:************************
+
+d_cus_ld 12/31/2020 03:25:09: TMP0_D_CUS_LU loaded successfully
+d_cus_ld 12/31/2020 03:25:09: set_activity_count
+d_cus_ld 12/31/2020 03:25:09: set_activity_count end
+d_cus_ld 12/31/2020 03:25:09: NO OF ROWS UPDATED: 1
+d_cus_ld 12/31/2020 03:25:09: Setting bookmark value for the script in DWH_C_BATCH_LOG table
+Start:************************
+query_command : UPDATE EXPDW_ETE_DWH.DWH_C_BATCH_LOG
+                      SET BOOKMARK='AFTER_UPDATE_TEMP0_TABLE_2'
+					  ,JOB_ID=505
+                      WHERE BATCH_ID=1539
+                       AND JOB_NAME = 'd_cus_ld'
+					   AND START_TIMESTAMP='2020-12-31 03:23:06.500000'
+                     
+END:************************
+
+
+
+==============================================================================================================================================
+====================================================  RUNNING CODES FOR BOOKMARK = AFTER_UPDATE_TEMP0_TABLE_2  ================================================
+==============================================================================================================================================
+
+
+d_cus_ld 12/31/2020 03:25:10: Update Temp0 Table Started
+Start:************************
+query_command : 
+	UPDATE TMP
+	FROM EXPDW_ETE_TMP.TMP0_D_CUS_LU TMP
+		, EXPDW_ETE_DWH_V.V_DWH_D_EMP_AGG_LU LU
+	SET PFUPD_EMP_AGG_KEY=LU.EMP_AGG_KEY
+	WHERE TMP.PFUPD_EMP_AGG_ID=LU.EMP_AGG_ID;
+	
+END:************************
+
+d_cus_ld 12/31/2020 03:25:10: TMP0_D_CUS_LU loaded successfully
+d_cus_ld 12/31/2020 03:25:10: set_activity_count
+d_cus_ld 12/31/2020 03:25:10: set_activity_count end
+d_cus_ld 12/31/2020 03:25:10: NO OF ROWS UPDATED: 0
+d_cus_ld 12/31/2020 03:25:10: Setting bookmark value for the script in DWH_C_BATCH_LOG table
+Start:************************
+query_command : UPDATE EXPDW_ETE_DWH.DWH_C_BATCH_LOG
+                      SET BOOKMARK='AFTER_UPDATE_TEMP0_TABLE_3'
+					  ,JOB_ID=505
+                      WHERE BATCH_ID=1539
+                       AND JOB_NAME = 'd_cus_ld'
+					   AND START_TIMESTAMP='2020-12-31 03:23:06.500000'
+                     
+END:************************
+
+
+
+==============================================================================================================================================
+====================================================  RUNNING CODES FOR BOOKMARK = AFTER_UPDATE_TEMP0_TABLE_3  ================================================
+==============================================================================================================================================
+
+
+d_cus_ld 12/31/2020 03:25:11: Load into Temporary Table Started
+d_cus_ld 12/31/2020 03:25:11: Truncate Temporary Table
+d_cus_ld 12/31/2020 03:25:11: Truncating table TMP_D_CUS_LU
+Start:************************
+query_command : DELETE FROM EXPDW_ETE_TMP.TMP_D_CUS_LU ALL
+END:************************
+
+d_cus_ld 12/31/2020 03:25:11: TMP_D_CUS_LU truncated successfully
+d_cus_ld 12/31/2020 03:25:11: Loading TMP_D_CUS_LU
+Start:************************
+query_command : 
+	INSERT INTO EXPDW_ETE_TMP.TMP_D_CUS_LU
+		( CUS_ID
+		,HHLD_KEY, FIRST_NAME, FIRST_NAME_SCRBD, LAST_NAME, LAST_NAME_SCRBD, ADDRESS1, ADDRESS1_SCRBD, ADDRESS2, ADDRESS2_SCRBD, CITY, CITY_SCRBD, STATE_CDE, STATE_SCRBD, ZIP_CDE, ZIP_CODE_SCRBD, ZIP4_CDE, ZIP4_CODE_SCRBD, ZIP_FULL_CDE_SCRBD, NON_US_POSTAL_CDE, COUNTRY_CDE, COUNTRY_CDE_SCRBD, NON_US_CUS_FLG, IS_ADDRESS_VALID_FLG, IS_ADDRESS_LIKELY_VALID_FLG, IS_EMAIL_VALID_FLG, IS_PHONE_FOR_SMS_VALID_FLG, PHONE_NUM, PHONE_TYP, EMAIL_ADDRESS, GENDER_CDE, DIRECT_MAIL_CONSENT_FLG, EMAIL_CONSENT_FLG, SMS_CONSENT_FLG, BIRTH_DT, AGE, AGE_GRP_CDE, AGE_QUALIFIER, DECEASED_FLG, ADDRESS_IS_PRISON_FLG, ADD_DT, INTRODCTN_DT, LATITUDE, LONGITUDE, CLOSEST_LOC_KEY, DIST_TO_CLOSEST_LOC, SECOND_CLOSEST_LOC_KEY, DIST_TO_SEC_CLOSEST_LOC, PREFERRED_LOC_KEY, DIST_TO_PREFERRED_LOC, FIRST_TXN_DT, FIRST_TXN_LOC_KEY, BRAND_FIRST_TXN_DT, ADS_DONOT_STATMNT_INS_IND, ADS_DONOT_SELL_NAME_IND, ADS_SPAM_IND, ADS_EMAIL_CHANGE_DT, ADS_RTRN_MAIL_FLG, IS_DM_MARKETABLE_FLG, IS_EM_MARKETABLE_FLG, IS_SMS_MARKETABLE_FLG, RCD_TYP, EMAIL_CONSENT_DT, SMS_CONSENT_DT, DIRECT_MAIL_CONSENT_DT, LYLTY_ID, HAS_PLCC_FLG, IS_LYLTY_MEMBER_FLG, IS_ALIST_FLG, LYLTY_TIER, LYLTY_MEMBER_STTS, LYLTY_ACCT_OPEN_DT, LYLTY_ACCT_CLOSE_DT, LYLTY_ACCT_ENROLL_DT, NEXT_CONVRSN_STTS, NCOA_LAST_CNG_DT, LYLTY_ENRLMNT_LOC_KEY, LYLTY_ENRLMNT_SRC_KEY, PLCC_OPEN_DT, PLCC_CLOSE_DT, PRIMARY_LOC_KEY, SECONDARY_LOC_KEY, LAST_TXN_DT, LAST_STR_PURCH_DT, LAST_WEB_PURCH_DT, GNDR_SHPNG_PREF_QTY, GNDR_SHPNG_PREF_AMT, PREFERRED_CHNL, DOMINANT_SHPNG_CHNL, LAST_BROWSE_DT, CS_AGENT_KEY, EMP_AGG_KEY, LOC_ASSOCIATE_KEY, REGSTRTN_DEVICE_TYP_CDE_KEY, REGSTRTN_DEVICE_TYP_ID, REGSTRTN_CHNL_SUB_TYP_ID, REGSTRTN_CHNL_ID, TERMNTN_REASN, LYLTY_ENRLMNT_SRC, PFCOM_FLG, PFCOM_DT, PFCOM_LOC_KEY, PFCOM_ASSOCIATE_KEY, PFCOM_CS_AGENT_KEY, PFCOM_EMP_AGG_KEY, PFCOM_SRC, PFCOM_DEVICE_TYP_CDE_KEY, PFCOM_DEVICE_TYP_ID, PFCOM_CHNL_SUB_TYP_ID, PFCOM_CHNL_ID, PFCOM_RWD_FLG, PFUPD_DT, YRLY_PFUPD_DT, PFUPD_LOC_KEY, PFUPD_ASSOCIATE_KEY, PFUPD_CS_AGENT_KEY, PFUPD_EMP_AGG_KEY, PFUPD_SRC, PFUPD_DEVICE_TYP_CDE_KEY, PFUPD_DEVICE_TYP_ID, PFUPD_CHNL_SUB_TYP_ID, PFUPD_CHNL_ID, YRLY_PFUPD_DEVICE_TYP_CDE_KEY, YRLY_PFUPD_DEVICE_TYP_ID, YRLY_PFUPD_CHNL_SUB_TYP_ID, YRLY_PFUPD_CHNL_ID, SIGNUP_TYP, LYLTY_TIER_KEY, TIER_FROM_DT, TIER_TO_DT, TIER_MOVE_REASN, EMP_KEY, IS_EMP_FLG						
+		)
+	SELECT CUS_ID
+		,HHLD_KEY, FIRST_NAME, FIRST_NAME_SCRBD, LAST_NAME, LAST_NAME_SCRBD, ADDRESS1, ADDRESS1_SCRBD, ADDRESS2, ADDRESS2_SCRBD, CITY, CITY_SCRBD, STATE_CDE, STATE_SCRBD, ZIP_CDE, ZIP_CODE_SCRBD, ZIP4_CDE, ZIP4_CODE_SCRBD, ZIP_FULL_CDE_SCRBD, NON_US_POSTAL_CDE, COUNTRY_CDE, COUNTRY_CDE_SCRBD, NON_US_CUS_FLG, IS_ADDRESS_VALID_FLG, IS_ADDRESS_LIKELY_VALID_FLG, IS_EMAIL_VALID_FLG, IS_PHONE_FOR_SMS_VALID_FLG, PHONE_NUM, PHONE_TYP, EMAIL_ADDRESS, GENDER_CDE, DIRECT_MAIL_CONSENT_FLG, EMAIL_CONSENT_FLG, SMS_CONSENT_FLG, BIRTH_DT, AGE, AGE_GRP_CDE, AGE_QUALIFIER, DECEASED_FLG, ADDRESS_IS_PRISON_FLG, ADD_DT, INTRODCTN_DT, LATITUDE, LONGITUDE, CLOSEST_LOC_KEY, DIST_TO_CLOSEST_LOC, SECOND_CLOSEST_LOC_KEY, DIST_TO_SEC_CLOSEST_LOC, PREFERRED_LOC_KEY, DIST_TO_PREFERRED_LOC, FIRST_TXN_DT, FIRST_TXN_LOC_KEY, BRAND_FIRST_TXN_DT, ADS_DONOT_STATMNT_INS_IND, ADS_DONOT_SELL_NAME_IND, ADS_SPAM_IND, ADS_EMAIL_CHANGE_DT, ADS_RTRN_MAIL_FLG, IS_DM_MARKETABLE_FLG, IS_EM_MARKETABLE_FLG, IS_SMS_MARKETABLE_FLG, RCD_TYP, EMAIL_CONSENT_DT, SMS_CONSENT_DT, DIRECT_MAIL_CONSENT_DT, LYLTY_ID, HAS_PLCC_FLG, IS_LYLTY_MEMBER_FLG, IS_ALIST_FLG, LYLTY_TIER, LYLTY_MEMBER_STTS, LYLTY_ACCT_OPEN_DT, LYLTY_ACCT_CLOSE_DT, LYLTY_ACCT_ENROLL_DT, NEXT_CONVRSN_STTS, NCOA_LAST_CNG_DT, LYLTY_ENRLMNT_LOC_KEY, LYLTY_ENRLMNT_SRC_KEY, PLCC_OPEN_DT, PLCC_CLOSE_DT, PRIMARY_LOC_KEY, SECONDARY_LOC_KEY, LAST_TXN_DT, LAST_STR_PURCH_DT, LAST_WEB_PURCH_DT, GNDR_SHPNG_PREF_QTY, GNDR_SHPNG_PREF_AMT, PREFERRED_CHNL, DOMINANT_SHPNG_CHNL, LAST_BROWSE_DT, CS_AGENT_KEY, EMP_AGG_KEY, LOC_ASSOCIATE_KEY, REGSTRTN_DEVICE_TYP_CDE_KEY, REGSTRTN_DEVICE_TYP_ID, REGSTRTN_CHNL_SUB_TYP_ID, REGSTRTN_CHNL_ID, TERMNTN_REASN, LYLTY_ENRLMNT_SRC, PFCOM_FLG, PFCOM_DT, PFCOM_LOC_KEY, PFCOM_ASSOCIATE_KEY, PFCOM_CS_AGENT_KEY, PFCOM_EMP_AGG_KEY, PFCOM_SRC, PFCOM_DEVICE_TYP_CDE_KEY, PFCOM_DEVICE_TYP_ID, PFCOM_CHNL_SUB_TYP_ID, PFCOM_CHNL_ID, PFCOM_RWD_FLG, PFUPD_DT, YRLY_PFUPD_DT, PFUPD_LOC_KEY, PFUPD_ASSOCIATE_KEY, PFUPD_CS_AGENT_KEY, PFUPD_EMP_AGG_KEY, PFUPD_SRC, PFUPD_DEVICE_TYP_CDE_KEY, PFUPD_DEVICE_TYP_ID, PFUPD_CHNL_SUB_TYP_ID, PFUPD_CHNL_ID, YRLY_PFUPD_DEVICE_TYP_CDE_KEY, YRLY_PFUPD_DEVICE_TYP_ID, YRLY_PFUPD_CHNL_SUB_TYP_ID, YRLY_PFUPD_CHNL_ID, SIGNUP_TYP, LYLTY_TIER_KEY, TIER_FROM_DT, TIER_TO_DT, TIER_MOVE_REASN, EMP_KEY, IS_EMP_FLG
+	FROM EXPDW_ETE_TMP.TMP0_D_CUS_LU SRC
+	QUALIFY SRC.INGEST_DT = MAX(SRC.INGEST_DT) 
+		OVER (PARTITION BY SRC.CUS_ID);
+	
+END:************************
+
+d_cus_ld 12/31/2020 03:25:12: TMP_D_CUS_LU loaded successfully
+d_cus_ld 12/31/2020 03:25:12: set_activity_count
+d_cus_ld 12/31/2020 03:25:12: set_activity_count end
+Start:************************
+query_command : SELECT COUNT(*) FROM EXPDW_ETE_TMP.TMP0_D_CUS_LU
+END:************************
+
+d_cus_ld 12/31/2020 03:25:12: Source     : TMP0_D_CUS_LU
+d_cus_ld 12/31/2020 03:25:12: Destination: TMP_D_CUS_LU
+d_cus_ld 12/31/2020 03:25:12: SQL Statistics:
+d_cus_ld 12/31/2020 03:25:12: NO OF ROWS INSERTED: 98
+d_cus_ld 12/31/2020 03:25:12: NO OF ROWS DELETED:  0
+d_cus_ld 12/31/2020 03:25:12: No OF ROWS UPDATED:  0
+Start:************************
+query_command : MERGE INTO EXPDW_ETE_DWH.DWH_C_AUDIT_LOG AS  A
+                   USING (
+    					 SELECT 1539 BATCH_ID 
+    							,505 JOB_ID
+    							,2 LEVEL
+    					 ) AS TMP
+    					 ON A.BATCH_ID = TMP.BATCH_ID
+    					  AND A.JOB_ID = TMP.JOB_ID
+    					  AND A.LEVEL = TMP.LEVEL
+    					 WHEN MATCHED THEN UPDATE
+            					 SET NUMBERS_OF_ROW_INSERTED = NUMBERS_OF_ROW_INSERTED+98
+    					 		    ,NUMBERS_OF_ROW_UPDATED  = NUMBERS_OF_ROW_UPDATED+0
+    					 		    ,NUMBERS_OF_ROW_DELETED  = NUMBERS_OF_ROW_DELETED+0
+    					 		    ,NUMBERS_OF_ROW_REJECTED = NUMBERS_OF_ROW_REJECTED+0
+									,AUDIT_TIMESTAMP = CURRENT_TIMESTAMP
+    					 WHEN NOT MATCHED THEN INSERT
+                   			   (	 BATCH_ID                
+    									,JOB_ID                  
+    									,JOB_NAME                
+    									,BUSINESS_DATE 
+                                        ,AUDIT_TIMESTAMP										
+    									,SOURCE        
+    									,SOURCE_COUNT            
+    									,TARGET         
+    									,NUMBERS_OF_ROW_INSERTED 
+    									,NUMBERS_OF_ROW_UPDATED  
+    									,NUMBERS_OF_ROW_DELETED  
+    									,NUMBERS_OF_ROW_REJECTED
+    									,LEVEL)
+    						VALUES(  TMP.BATCH_ID     
+    								,TMP.JOB_ID
+    								,'d_cus_ld'
+    								,CAST('2020-12-29' AS DATE FORMAT 'YYYY-MM-DD')
+									,CURRENT_TIMESTAMP
+    								,'TMP0_D_CUS_LU'
+    								,         98
+    								,'TMP_D_CUS_LU'
+    								,98
+    								,0
+    								,0
+    								,0
+    								,TMP.LEVEL)
+    							
+END:************************
+
+d_cus_ld 12/31/2020 03:25:12: Setting bookmark value for the script in DWH_C_BATCH_LOG table
+Start:************************
+query_command : UPDATE EXPDW_ETE_DWH.DWH_C_BATCH_LOG
+                      SET BOOKMARK='AFTER_LOAD_TEMP_TABLE'
+					  ,JOB_ID=505
+                      WHERE BATCH_ID=1539
+                       AND JOB_NAME = 'd_cus_ld'
+					   AND START_TIMESTAMP='2020-12-31 03:23:06.500000'
+                     
+END:************************
+
+
+
+==============================================================================================================================================
+====================================================  RUNNING CODES FOR BOOKMARK = AFTER_LOAD_TEMP_TABLE  ================================================
+==============================================================================================================================================
+
+
+d_cus_ld 12/31/2020 03:25:13: Loading DWH_D_CUS_LU
+d_cus_ld 12/31/2020 03:25:13: 
+d_cus_ld 12/31/2020 03:25:13: ###################################################################################
+d_cus_ld 12/31/2020 03:25:13: Updating records in DWH_D_CUS_LU
+Start:************************
+query_command : UPDATE tgt
+										FROM EXPDW_ETE_DWH.DWH_D_CUS_LU tgt, 
+										EXPDW_ETE_TMP.TMP_D_CUS_LU src
+								   SET HHLD_KEY=src.HHLD_KEY, FIRST_NAME=src.FIRST_NAME, FIRST_NAME_SCRBD=src.FIRST_NAME_SCRBD, LAST_NAME=src.LAST_NAME, LAST_NAME_SCRBD=src.LAST_NAME_SCRBD, ADDRESS1=src.ADDRESS1, ADDRESS1_SCRBD=src.ADDRESS1_SCRBD, ADDRESS2=src.ADDRESS2, ADDRESS2_SCRBD=src.ADDRESS2_SCRBD, CITY=src.CITY, CITY_SCRBD=src.CITY_SCRBD, STATE_CDE=src.STATE_CDE, STATE_SCRBD=src.STATE_SCRBD, ZIP_CDE=src.ZIP_CDE, ZIP_CODE_SCRBD=src.ZIP_CODE_SCRBD, ZIP4_CDE=src.ZIP4_CDE, ZIP4_CODE_SCRBD=src.ZIP4_CODE_SCRBD, ZIP_FULL_CDE_SCRBD=src.ZIP_FULL_CDE_SCRBD, NON_US_POSTAL_CDE=src.NON_US_POSTAL_CDE, COUNTRY_CDE=src.COUNTRY_CDE, COUNTRY_CDE_SCRBD=src.COUNTRY_CDE_SCRBD, NON_US_CUS_FLG=src.NON_US_CUS_FLG, IS_ADDRESS_VALID_FLG=src.IS_ADDRESS_VALID_FLG, IS_ADDRESS_LIKELY_VALID_FLG=src.IS_ADDRESS_LIKELY_VALID_FLG, IS_EMAIL_VALID_FLG=src.IS_EMAIL_VALID_FLG, IS_PHONE_FOR_SMS_VALID_FLG=src.IS_PHONE_FOR_SMS_VALID_FLG, PHONE_NUM=src.PHONE_NUM, PHONE_TYP=src.PHONE_TYP, EMAIL_ADDRESS=src.EMAIL_ADDRESS, GENDER_CDE=src.GENDER_CDE, DIRECT_MAIL_CONSENT_FLG=src.DIRECT_MAIL_CONSENT_FLG, EMAIL_CONSENT_FLG=src.EMAIL_CONSENT_FLG, SMS_CONSENT_FLG=src.SMS_CONSENT_FLG, BIRTH_DT=src.BIRTH_DT, AGE=src.AGE, AGE_GRP_CDE=src.AGE_GRP_CDE, AGE_QUALIFIER=src.AGE_QUALIFIER, DECEASED_FLG=src.DECEASED_FLG, ADDRESS_IS_PRISON_FLG=src.ADDRESS_IS_PRISON_FLG, ADD_DT=src.ADD_DT, INTRODCTN_DT=src.INTRODCTN_DT, LATITUDE=src.LATITUDE, LONGITUDE=src.LONGITUDE, CLOSEST_LOC_KEY=src.CLOSEST_LOC_KEY, DIST_TO_CLOSEST_LOC=src.DIST_TO_CLOSEST_LOC, SECOND_CLOSEST_LOC_KEY=src.SECOND_CLOSEST_LOC_KEY, DIST_TO_SEC_CLOSEST_LOC=src.DIST_TO_SEC_CLOSEST_LOC, PREFERRED_LOC_KEY=src.PREFERRED_LOC_KEY, DIST_TO_PREFERRED_LOC=src.DIST_TO_PREFERRED_LOC, FIRST_TXN_DT=src.FIRST_TXN_DT, FIRST_TXN_LOC_KEY=src.FIRST_TXN_LOC_KEY, BRAND_FIRST_TXN_DT=src.BRAND_FIRST_TXN_DT, ADS_DONOT_STATMNT_INS_IND=src.ADS_DONOT_STATMNT_INS_IND, ADS_DONOT_SELL_NAME_IND=src.ADS_DONOT_SELL_NAME_IND, ADS_SPAM_IND=src.ADS_SPAM_IND, ADS_EMAIL_CHANGE_DT=src.ADS_EMAIL_CHANGE_DT, ADS_RTRN_MAIL_FLG=src.ADS_RTRN_MAIL_FLG, IS_DM_MARKETABLE_FLG=src.IS_DM_MARKETABLE_FLG, IS_EM_MARKETABLE_FLG=src.IS_EM_MARKETABLE_FLG, IS_SMS_MARKETABLE_FLG=src.IS_SMS_MARKETABLE_FLG, RCD_TYP=src.RCD_TYP, EMAIL_CONSENT_DT=src.EMAIL_CONSENT_DT, SMS_CONSENT_DT=src.SMS_CONSENT_DT, DIRECT_MAIL_CONSENT_DT=src.DIRECT_MAIL_CONSENT_DT, LYLTY_ID=src.LYLTY_ID, HAS_PLCC_FLG=src.HAS_PLCC_FLG, IS_LYLTY_MEMBER_FLG=src.IS_LYLTY_MEMBER_FLG, IS_ALIST_FLG=src.IS_ALIST_FLG, LYLTY_TIER=src.LYLTY_TIER, LYLTY_MEMBER_STTS=src.LYLTY_MEMBER_STTS, LYLTY_ACCT_OPEN_DT=src.LYLTY_ACCT_OPEN_DT, LYLTY_ACCT_CLOSE_DT=src.LYLTY_ACCT_CLOSE_DT, LYLTY_ACCT_ENROLL_DT=src.LYLTY_ACCT_ENROLL_DT, NEXT_CONVRSN_STTS=src.NEXT_CONVRSN_STTS, NCOA_LAST_CNG_DT=src.NCOA_LAST_CNG_DT, LYLTY_ENRLMNT_LOC_KEY=src.LYLTY_ENRLMNT_LOC_KEY, LYLTY_ENRLMNT_SRC_KEY=src.LYLTY_ENRLMNT_SRC_KEY, PLCC_OPEN_DT=src.PLCC_OPEN_DT, PLCC_CLOSE_DT=src.PLCC_CLOSE_DT, PRIMARY_LOC_KEY=src.PRIMARY_LOC_KEY, SECONDARY_LOC_KEY=src.SECONDARY_LOC_KEY, LAST_TXN_DT=src.LAST_TXN_DT, LAST_STR_PURCH_DT=src.LAST_STR_PURCH_DT, LAST_WEB_PURCH_DT=src.LAST_WEB_PURCH_DT, GNDR_SHPNG_PREF_QTY=src.GNDR_SHPNG_PREF_QTY, GNDR_SHPNG_PREF_AMT=src.GNDR_SHPNG_PREF_AMT, PREFERRED_CHNL=src.PREFERRED_CHNL, DOMINANT_SHPNG_CHNL=src.DOMINANT_SHPNG_CHNL, LAST_BROWSE_DT=src.LAST_BROWSE_DT, CS_AGENT_KEY=src.CS_AGENT_KEY, EMP_AGG_KEY=src.EMP_AGG_KEY, LOC_ASSOCIATE_KEY=src.LOC_ASSOCIATE_KEY, REGSTRTN_DEVICE_TYP_CDE_KEY=src.REGSTRTN_DEVICE_TYP_CDE_KEY, REGSTRTN_DEVICE_TYP_ID=src.REGSTRTN_DEVICE_TYP_ID, REGSTRTN_CHNL_SUB_TYP_ID=src.REGSTRTN_CHNL_SUB_TYP_ID, REGSTRTN_CHNL_ID=src.REGSTRTN_CHNL_ID, TERMNTN_REASN=src.TERMNTN_REASN, LYLTY_ENRLMNT_SRC=src.LYLTY_ENRLMNT_SRC, PFCOM_FLG=src.PFCOM_FLG, PFCOM_DT=src.PFCOM_DT, PFCOM_LOC_KEY=src.PFCOM_LOC_KEY, PFCOM_ASSOCIATE_KEY=src.PFCOM_ASSOCIATE_KEY, PFCOM_CS_AGENT_KEY=src.PFCOM_CS_AGENT_KEY, PFCOM_EMP_AGG_KEY=src.PFCOM_EMP_AGG_KEY, PFCOM_SRC=src.PFCOM_SRC, PFCOM_DEVICE_TYP_CDE_KEY=src.PFCOM_DEVICE_TYP_CDE_KEY, PFCOM_DEVICE_TYP_ID=src.PFCOM_DEVICE_TYP_ID, PFCOM_CHNL_SUB_TYP_ID=src.PFCOM_CHNL_SUB_TYP_ID, PFCOM_CHNL_ID=src.PFCOM_CHNL_ID, PFCOM_RWD_FLG=src.PFCOM_RWD_FLG, PFUPD_DT=src.PFUPD_DT, YRLY_PFUPD_DT=src.YRLY_PFUPD_DT, PFUPD_LOC_KEY=src.PFUPD_LOC_KEY, PFUPD_ASSOCIATE_KEY=src.PFUPD_ASSOCIATE_KEY, PFUPD_CS_AGENT_KEY=src.PFUPD_CS_AGENT_KEY, PFUPD_EMP_AGG_KEY=src.PFUPD_EMP_AGG_KEY, PFUPD_SRC=src.PFUPD_SRC, PFUPD_DEVICE_TYP_CDE_KEY=src.PFUPD_DEVICE_TYP_CDE_KEY, PFUPD_DEVICE_TYP_ID=src.PFUPD_DEVICE_TYP_ID, PFUPD_CHNL_SUB_TYP_ID=src.PFUPD_CHNL_SUB_TYP_ID, PFUPD_CHNL_ID=src.PFUPD_CHNL_ID, YRLY_PFUPD_DEVICE_TYP_CDE_KEY=src.YRLY_PFUPD_DEVICE_TYP_CDE_KEY, YRLY_PFUPD_DEVICE_TYP_ID=src.YRLY_PFUPD_DEVICE_TYP_ID, YRLY_PFUPD_CHNL_SUB_TYP_ID=src.YRLY_PFUPD_CHNL_SUB_TYP_ID, YRLY_PFUPD_CHNL_ID=src.YRLY_PFUPD_CHNL_ID, SIGNUP_TYP=src.SIGNUP_TYP, LYLTY_TIER_KEY=src.LYLTY_TIER_KEY, TIER_FROM_DT=src.TIER_FROM_DT, TIER_TO_DT=src.TIER_TO_DT, TIER_MOVE_REASN=src.TIER_MOVE_REASN, EMP_KEY=src.EMP_KEY, IS_EMP_FLG=src.IS_EMP_FLG
+										,RCD_UPD_TS=CAST('20201231032302' AS TIMESTAMP FORMAT 'YYYYMMDDHHMISS')
+										
+									WHERE src.CUS_ID=tgt.CUS_ID 
+										AND (src.HHLD_KEY <> tgt.HHLD_KEY OR (src.HHLD_KEY IS NULL AND tgt.HHLD_KEY IS NOT NULL) OR (src.HHLD_KEY IS NOT NULL AND tgt.HHLD_KEY IS NULL) OR src.FIRST_NAME <> tgt.FIRST_NAME OR (src.FIRST_NAME IS NULL AND tgt.FIRST_NAME IS NOT NULL) OR (src.FIRST_NAME IS NOT NULL AND tgt.FIRST_NAME IS NULL) OR src.FIRST_NAME_SCRBD <> tgt.FIRST_NAME_SCRBD OR (src.FIRST_NAME_SCRBD IS NULL AND tgt.FIRST_NAME_SCRBD IS NOT NULL) OR (src.FIRST_NAME_SCRBD IS NOT NULL AND tgt.FIRST_NAME_SCRBD IS NULL) OR src.LAST_NAME <> tgt.LAST_NAME OR (src.LAST_NAME IS NULL AND tgt.LAST_NAME IS NOT NULL) OR (src.LAST_NAME IS NOT NULL AND tgt.LAST_NAME IS NULL) OR src.LAST_NAME_SCRBD <> tgt.LAST_NAME_SCRBD OR (src.LAST_NAME_SCRBD IS NULL AND tgt.LAST_NAME_SCRBD IS NOT NULL) OR (src.LAST_NAME_SCRBD IS NOT NULL AND tgt.LAST_NAME_SCRBD IS NULL) OR src.ADDRESS1 <> tgt.ADDRESS1 OR (src.ADDRESS1 IS NULL AND tgt.ADDRESS1 IS NOT NULL) OR (src.ADDRESS1 IS NOT NULL AND tgt.ADDRESS1 IS NULL) OR src.ADDRESS1_SCRBD <> tgt.ADDRESS1_SCRBD OR (src.ADDRESS1_SCRBD IS NULL AND tgt.ADDRESS1_SCRBD IS NOT NULL) OR (src.ADDRESS1_SCRBD IS NOT NULL AND tgt.ADDRESS1_SCRBD IS NULL) OR src.ADDRESS2 <> tgt.ADDRESS2 OR (src.ADDRESS2 IS NULL AND tgt.ADDRESS2 IS NOT NULL) OR (src.ADDRESS2 IS NOT NULL AND tgt.ADDRESS2 IS NULL) OR src.ADDRESS2_SCRBD <> tgt.ADDRESS2_SCRBD OR (src.ADDRESS2_SCRBD IS NULL AND tgt.ADDRESS2_SCRBD IS NOT NULL) OR (src.ADDRESS2_SCRBD IS NOT NULL AND tgt.ADDRESS2_SCRBD IS NULL) OR src.CITY <> tgt.CITY OR (src.CITY IS NULL AND tgt.CITY IS NOT NULL) OR (src.CITY IS NOT NULL AND tgt.CITY IS NULL) OR src.CITY_SCRBD <> tgt.CITY_SCRBD OR (src.CITY_SCRBD IS NULL AND tgt.CITY_SCRBD IS NOT NULL) OR (src.CITY_SCRBD IS NOT NULL AND tgt.CITY_SCRBD IS NULL) OR src.STATE_CDE <> tgt.STATE_CDE OR (src.STATE_CDE IS NULL AND tgt.STATE_CDE IS NOT NULL) OR (src.STATE_CDE IS NOT NULL AND tgt.STATE_CDE IS NULL) OR src.STATE_SCRBD <> tgt.STATE_SCRBD OR (src.STATE_SCRBD IS NULL AND tgt.STATE_SCRBD IS NOT NULL) OR (src.STATE_SCRBD IS NOT NULL AND tgt.STATE_SCRBD IS NULL) OR src.ZIP_CDE <> tgt.ZIP_CDE OR (src.ZIP_CDE IS NULL AND tgt.ZIP_CDE IS NOT NULL) OR (src.ZIP_CDE IS NOT NULL AND tgt.ZIP_CDE IS NULL) OR src.ZIP_CODE_SCRBD <> tgt.ZIP_CODE_SCRBD OR (src.ZIP_CODE_SCRBD IS NULL AND tgt.ZIP_CODE_SCRBD IS NOT NULL) OR (src.ZIP_CODE_SCRBD IS NOT NULL AND tgt.ZIP_CODE_SCRBD IS NULL) OR src.ZIP4_CDE <> tgt.ZIP4_CDE OR (src.ZIP4_CDE IS NULL AND tgt.ZIP4_CDE IS NOT NULL) OR (src.ZIP4_CDE IS NOT NULL AND tgt.ZIP4_CDE IS NULL) OR src.ZIP4_CODE_SCRBD <> tgt.ZIP4_CODE_SCRBD OR (src.ZIP4_CODE_SCRBD IS NULL AND tgt.ZIP4_CODE_SCRBD IS NOT NULL) OR (src.ZIP4_CODE_SCRBD IS NOT NULL AND tgt.ZIP4_CODE_SCRBD IS NULL) OR src.ZIP_FULL_CDE_SCRBD <> tgt.ZIP_FULL_CDE_SCRBD OR (src.ZIP_FULL_CDE_SCRBD IS NULL AND tgt.ZIP_FULL_CDE_SCRBD IS NOT NULL) OR (src.ZIP_FULL_CDE_SCRBD IS NOT NULL AND tgt.ZIP_FULL_CDE_SCRBD IS NULL) OR src.NON_US_POSTAL_CDE <> tgt.NON_US_POSTAL_CDE OR (src.NON_US_POSTAL_CDE IS NULL AND tgt.NON_US_POSTAL_CDE IS NOT NULL) OR (src.NON_US_POSTAL_CDE IS NOT NULL AND tgt.NON_US_POSTAL_CDE IS NULL) OR src.COUNTRY_CDE <> tgt.COUNTRY_CDE OR (src.COUNTRY_CDE IS NULL AND tgt.COUNTRY_CDE IS NOT NULL) OR (src.COUNTRY_CDE IS NOT NULL AND tgt.COUNTRY_CDE IS NULL) OR src.COUNTRY_CDE_SCRBD <> tgt.COUNTRY_CDE_SCRBD OR (src.COUNTRY_CDE_SCRBD IS NULL AND tgt.COUNTRY_CDE_SCRBD IS NOT NULL) OR (src.COUNTRY_CDE_SCRBD IS NOT NULL AND tgt.COUNTRY_CDE_SCRBD IS NULL) OR src.NON_US_CUS_FLG <> tgt.NON_US_CUS_FLG OR (src.NON_US_CUS_FLG IS NULL AND tgt.NON_US_CUS_FLG IS NOT NULL) OR (src.NON_US_CUS_FLG IS NOT NULL AND tgt.NON_US_CUS_FLG IS NULL) OR src.IS_ADDRESS_VALID_FLG <> tgt.IS_ADDRESS_VALID_FLG OR (src.IS_ADDRESS_VALID_FLG IS NULL AND tgt.IS_ADDRESS_VALID_FLG IS NOT NULL) OR (src.IS_ADDRESS_VALID_FLG IS NOT NULL AND tgt.IS_ADDRESS_VALID_FLG IS NULL) OR src.IS_ADDRESS_LIKELY_VALID_FLG <> tgt.IS_ADDRESS_LIKELY_VALID_FLG OR (src.IS_ADDRESS_LIKELY_VALID_FLG IS NULL AND tgt.IS_ADDRESS_LIKELY_VALID_FLG IS NOT NULL) OR (src.IS_ADDRESS_LIKELY_VALID_FLG IS NOT NULL AND tgt.IS_ADDRESS_LIKELY_VALID_FLG IS NULL) OR src.IS_EMAIL_VALID_FLG <> tgt.IS_EMAIL_VALID_FLG OR (src.IS_EMAIL_VALID_FLG IS NULL AND tgt.IS_EMAIL_VALID_FLG IS NOT NULL) OR (src.IS_EMAIL_VALID_FLG IS NOT NULL AND tgt.IS_EMAIL_VALID_FLG IS NULL) OR src.IS_PHONE_FOR_SMS_VALID_FLG <> tgt.IS_PHONE_FOR_SMS_VALID_FLG OR (src.IS_PHONE_FOR_SMS_VALID_FLG IS NULL AND tgt.IS_PHONE_FOR_SMS_VALID_FLG IS NOT NULL) OR (src.IS_PHONE_FOR_SMS_VALID_FLG IS NOT NULL AND tgt.IS_PHONE_FOR_SMS_VALID_FLG IS NULL) OR src.PHONE_NUM <> tgt.PHONE_NUM OR (src.PHONE_NUM IS NULL AND tgt.PHONE_NUM IS NOT NULL) OR (src.PHONE_NUM IS NOT NULL AND tgt.PHONE_NUM IS NULL) OR src.PHONE_TYP <> tgt.PHONE_TYP OR (src.PHONE_TYP IS NULL AND tgt.PHONE_TYP IS NOT NULL) OR (src.PHONE_TYP IS NOT NULL AND tgt.PHONE_TYP IS NULL) OR src.EMAIL_ADDRESS <> tgt.EMAIL_ADDRESS OR (src.EMAIL_ADDRESS IS NULL AND tgt.EMAIL_ADDRESS IS NOT NULL) OR (src.EMAIL_ADDRESS IS NOT NULL AND tgt.EMAIL_ADDRESS IS NULL) OR src.GENDER_CDE <> tgt.GENDER_CDE OR (src.GENDER_CDE IS NULL AND tgt.GENDER_CDE IS NOT NULL) OR (src.GENDER_CDE IS NOT NULL AND tgt.GENDER_CDE IS NULL) OR src.DIRECT_MAIL_CONSENT_FLG <> tgt.DIRECT_MAIL_CONSENT_FLG OR (src.DIRECT_MAIL_CONSENT_FLG IS NULL AND tgt.DIRECT_MAIL_CONSENT_FLG IS NOT NULL) OR (src.DIRECT_MAIL_CONSENT_FLG IS NOT NULL AND tgt.DIRECT_MAIL_CONSENT_FLG IS NULL) OR src.EMAIL_CONSENT_FLG <> tgt.EMAIL_CONSENT_FLG OR (src.EMAIL_CONSENT_FLG IS NULL AND tgt.EMAIL_CONSENT_FLG IS NOT NULL) OR (src.EMAIL_CONSENT_FLG IS NOT NULL AND tgt.EMAIL_CONSENT_FLG IS NULL) OR src.SMS_CONSENT_FLG <> tgt.SMS_CONSENT_FLG OR (src.SMS_CONSENT_FLG IS NULL AND tgt.SMS_CONSENT_FLG IS NOT NULL) OR (src.SMS_CONSENT_FLG IS NOT NULL AND tgt.SMS_CONSENT_FLG IS NULL) OR src.BIRTH_DT <> tgt.BIRTH_DT OR (src.BIRTH_DT IS NULL AND tgt.BIRTH_DT IS NOT NULL) OR (src.BIRTH_DT IS NOT NULL AND tgt.BIRTH_DT IS NULL) OR src.AGE <> tgt.AGE OR (src.AGE IS NULL AND tgt.AGE IS NOT NULL) OR (src.AGE IS NOT NULL AND tgt.AGE IS NULL) OR src.AGE_GRP_CDE <> tgt.AGE_GRP_CDE OR (src.AGE_GRP_CDE IS NULL AND tgt.AGE_GRP_CDE IS NOT NULL) OR (src.AGE_GRP_CDE IS NOT NULL AND tgt.AGE_GRP_CDE IS NULL) OR src.AGE_QUALIFIER <> tgt.AGE_QUALIFIER OR (src.AGE_QUALIFIER IS NULL AND tgt.AGE_QUALIFIER IS NOT NULL) OR (src.AGE_QUALIFIER IS NOT NULL AND tgt.AGE_QUALIFIER IS NULL) OR src.DECEASED_FLG <> tgt.DECEASED_FLG OR (src.DECEASED_FLG IS NULL AND tgt.DECEASED_FLG IS NOT NULL) OR (src.DECEASED_FLG IS NOT NULL AND tgt.DECEASED_FLG IS NULL) OR src.ADDRESS_IS_PRISON_FLG <> tgt.ADDRESS_IS_PRISON_FLG OR (src.ADDRESS_IS_PRISON_FLG IS NULL AND tgt.ADDRESS_IS_PRISON_FLG IS NOT NULL) OR (src.ADDRESS_IS_PRISON_FLG IS NOT NULL AND tgt.ADDRESS_IS_PRISON_FLG IS NULL) OR src.ADD_DT <> tgt.ADD_DT OR (src.ADD_DT IS NULL AND tgt.ADD_DT IS NOT NULL) OR (src.ADD_DT IS NOT NULL AND tgt.ADD_DT IS NULL) OR src.INTRODCTN_DT <> tgt.INTRODCTN_DT OR (src.INTRODCTN_DT IS NULL AND tgt.INTRODCTN_DT IS NOT NULL) OR (src.INTRODCTN_DT IS NOT NULL AND tgt.INTRODCTN_DT IS NULL) OR src.LATITUDE <> tgt.LATITUDE OR (src.LATITUDE IS NULL AND tgt.LATITUDE IS NOT NULL) OR (src.LATITUDE IS NOT NULL AND tgt.LATITUDE IS NULL) OR src.LONGITUDE <> tgt.LONGITUDE OR (src.LONGITUDE IS NULL AND tgt.LONGITUDE IS NOT NULL) OR (src.LONGITUDE IS NOT NULL AND tgt.LONGITUDE IS NULL) OR src.CLOSEST_LOC_KEY <> tgt.CLOSEST_LOC_KEY OR (src.CLOSEST_LOC_KEY IS NULL AND tgt.CLOSEST_LOC_KEY IS NOT NULL) OR (src.CLOSEST_LOC_KEY IS NOT NULL AND tgt.CLOSEST_LOC_KEY IS NULL) OR src.DIST_TO_CLOSEST_LOC <> tgt.DIST_TO_CLOSEST_LOC OR (src.DIST_TO_CLOSEST_LOC IS NULL AND tgt.DIST_TO_CLOSEST_LOC IS NOT NULL) OR (src.DIST_TO_CLOSEST_LOC IS NOT NULL AND tgt.DIST_TO_CLOSEST_LOC IS NULL) OR src.SECOND_CLOSEST_LOC_KEY <> tgt.SECOND_CLOSEST_LOC_KEY OR (src.SECOND_CLOSEST_LOC_KEY IS NULL AND tgt.SECOND_CLOSEST_LOC_KEY IS NOT NULL) OR (src.SECOND_CLOSEST_LOC_KEY IS NOT NULL AND tgt.SECOND_CLOSEST_LOC_KEY IS NULL) OR src.DIST_TO_SEC_CLOSEST_LOC <> tgt.DIST_TO_SEC_CLOSEST_LOC OR (src.DIST_TO_SEC_CLOSEST_LOC IS NULL AND tgt.DIST_TO_SEC_CLOSEST_LOC IS NOT NULL) OR (src.DIST_TO_SEC_CLOSEST_LOC IS NOT NULL AND tgt.DIST_TO_SEC_CLOSEST_LOC IS NULL) OR src.PREFERRED_LOC_KEY <> tgt.PREFERRED_LOC_KEY OR (src.PREFERRED_LOC_KEY IS NULL AND tgt.PREFERRED_LOC_KEY IS NOT NULL) OR (src.PREFERRED_LOC_KEY IS NOT NULL AND tgt.PREFERRED_LOC_KEY IS NULL) OR src.DIST_TO_PREFERRED_LOC <> tgt.DIST_TO_PREFERRED_LOC OR (src.DIST_TO_PREFERRED_LOC IS NULL AND tgt.DIST_TO_PREFERRED_LOC IS NOT NULL) OR (src.DIST_TO_PREFERRED_LOC IS NOT NULL AND tgt.DIST_TO_PREFERRED_LOC IS NULL) OR src.FIRST_TXN_DT <> tgt.FIRST_TXN_DT OR (src.FIRST_TXN_DT IS NULL AND tgt.FIRST_TXN_DT IS NOT NULL) OR (src.FIRST_TXN_DT IS NOT NULL AND tgt.FIRST_TXN_DT IS NULL) OR src.FIRST_TXN_LOC_KEY <> tgt.FIRST_TXN_LOC_KEY OR (src.FIRST_TXN_LOC_KEY IS NULL AND tgt.FIRST_TXN_LOC_KEY IS NOT NULL) OR (src.FIRST_TXN_LOC_KEY IS NOT NULL AND tgt.FIRST_TXN_LOC_KEY IS NULL) OR src.BRAND_FIRST_TXN_DT <> tgt.BRAND_FIRST_TXN_DT OR (src.BRAND_FIRST_TXN_DT IS NULL AND tgt.BRAND_FIRST_TXN_DT IS NOT NULL) OR (src.BRAND_FIRST_TXN_DT IS NOT NULL AND tgt.BRAND_FIRST_TXN_DT IS NULL) OR src.ADS_DONOT_STATMNT_INS_IND <> tgt.ADS_DONOT_STATMNT_INS_IND OR (src.ADS_DONOT_STATMNT_INS_IND IS NULL AND tgt.ADS_DONOT_STATMNT_INS_IND IS NOT NULL) OR (src.ADS_DONOT_STATMNT_INS_IND IS NOT NULL AND tgt.ADS_DONOT_STATMNT_INS_IND IS NULL) OR src.ADS_DONOT_SELL_NAME_IND <> tgt.ADS_DONOT_SELL_NAME_IND OR (src.ADS_DONOT_SELL_NAME_IND IS NULL AND tgt.ADS_DONOT_SELL_NAME_IND IS NOT NULL) OR (src.ADS_DONOT_SELL_NAME_IND IS NOT NULL AND tgt.ADS_DONOT_SELL_NAME_IND IS NULL) OR src.ADS_SPAM_IND <> tgt.ADS_SPAM_IND OR (src.ADS_SPAM_IND IS NULL AND tgt.ADS_SPAM_IND IS NOT NULL) OR (src.ADS_SPAM_IND IS NOT NULL AND tgt.ADS_SPAM_IND IS NULL) OR src.ADS_EMAIL_CHANGE_DT <> tgt.ADS_EMAIL_CHANGE_DT OR (src.ADS_EMAIL_CHANGE_DT IS NULL AND tgt.ADS_EMAIL_CHANGE_DT IS NOT NULL) OR (src.ADS_EMAIL_CHANGE_DT IS NOT NULL AND tgt.ADS_EMAIL_CHANGE_DT IS NULL) OR src.ADS_RTRN_MAIL_FLG <> tgt.ADS_RTRN_MAIL_FLG OR (src.ADS_RTRN_MAIL_FLG IS NULL AND tgt.ADS_RTRN_MAIL_FLG IS NOT NULL) OR (src.ADS_RTRN_MAIL_FLG IS NOT NULL AND tgt.ADS_RTRN_MAIL_FLG IS NULL) OR src.IS_DM_MARKETABLE_FLG <> tgt.IS_DM_MARKETABLE_FLG OR (src.IS_DM_MARKETABLE_FLG IS NULL AND tgt.IS_DM_MARKETABLE_FLG IS NOT NULL) OR (src.IS_DM_MARKETABLE_FLG IS NOT NULL AND tgt.IS_DM_MARKETABLE_FLG IS NULL) OR src.IS_EM_MARKETABLE_FLG <> tgt.IS_EM_MARKETABLE_FLG OR (src.IS_EM_MARKETABLE_FLG IS NULL AND tgt.IS_EM_MARKETABLE_FLG IS NOT NULL) OR (src.IS_EM_MARKETABLE_FLG IS NOT NULL AND tgt.IS_EM_MARKETABLE_FLG IS NULL) OR src.IS_SMS_MARKETABLE_FLG <> tgt.IS_SMS_MARKETABLE_FLG OR (src.IS_SMS_MARKETABLE_FLG IS NULL AND tgt.IS_SMS_MARKETABLE_FLG IS NOT NULL) OR (src.IS_SMS_MARKETABLE_FLG IS NOT NULL AND tgt.IS_SMS_MARKETABLE_FLG IS NULL) OR src.RCD_TYP <> tgt.RCD_TYP OR (src.RCD_TYP IS NULL AND tgt.RCD_TYP IS NOT NULL) OR (src.RCD_TYP IS NOT NULL AND tgt.RCD_TYP IS NULL) OR src.EMAIL_CONSENT_DT <> tgt.EMAIL_CONSENT_DT OR (src.EMAIL_CONSENT_DT IS NULL AND tgt.EMAIL_CONSENT_DT IS NOT NULL) OR (src.EMAIL_CONSENT_DT IS NOT NULL AND tgt.EMAIL_CONSENT_DT IS NULL) OR src.SMS_CONSENT_DT <> tgt.SMS_CONSENT_DT OR (src.SMS_CONSENT_DT IS NULL AND tgt.SMS_CONSENT_DT IS NOT NULL) OR (src.SMS_CONSENT_DT IS NOT NULL AND tgt.SMS_CONSENT_DT IS NULL) OR src.DIRECT_MAIL_CONSENT_DT <> tgt.DIRECT_MAIL_CONSENT_DT OR (src.DIRECT_MAIL_CONSENT_DT IS NULL AND tgt.DIRECT_MAIL_CONSENT_DT IS NOT NULL) OR (src.DIRECT_MAIL_CONSENT_DT IS NOT NULL AND tgt.DIRECT_MAIL_CONSENT_DT IS NULL) OR src.LYLTY_ID <> tgt.LYLTY_ID OR (src.LYLTY_ID IS NULL AND tgt.LYLTY_ID IS NOT NULL) OR (src.LYLTY_ID IS NOT NULL AND tgt.LYLTY_ID IS NULL) OR src.HAS_PLCC_FLG <> tgt.HAS_PLCC_FLG OR (src.HAS_PLCC_FLG IS NULL AND tgt.HAS_PLCC_FLG IS NOT NULL) OR (src.HAS_PLCC_FLG IS NOT NULL AND tgt.HAS_PLCC_FLG IS NULL) OR src.IS_LYLTY_MEMBER_FLG <> tgt.IS_LYLTY_MEMBER_FLG OR (src.IS_LYLTY_MEMBER_FLG IS NULL AND tgt.IS_LYLTY_MEMBER_FLG IS NOT NULL) OR (src.IS_LYLTY_MEMBER_FLG IS NOT NULL AND tgt.IS_LYLTY_MEMBER_FLG IS NULL) OR src.IS_ALIST_FLG <> tgt.IS_ALIST_FLG OR (src.IS_ALIST_FLG IS NULL AND tgt.IS_ALIST_FLG IS NOT NULL) OR (src.IS_ALIST_FLG IS NOT NULL AND tgt.IS_ALIST_FLG IS NULL) OR src.LYLTY_TIER <> tgt.LYLTY_TIER OR (src.LYLTY_TIER IS NULL AND tgt.LYLTY_TIER IS NOT NULL) OR (src.LYLTY_TIER IS NOT NULL AND tgt.LYLTY_TIER IS NULL) OR src.LYLTY_MEMBER_STTS <> tgt.LYLTY_MEMBER_STTS OR (src.LYLTY_MEMBER_STTS IS NULL AND tgt.LYLTY_MEMBER_STTS IS NOT NULL) OR (src.LYLTY_MEMBER_STTS IS NOT NULL AND tgt.LYLTY_MEMBER_STTS IS NULL) OR src.LYLTY_ACCT_OPEN_DT <> tgt.LYLTY_ACCT_OPEN_DT OR (src.LYLTY_ACCT_OPEN_DT IS NULL AND tgt.LYLTY_ACCT_OPEN_DT IS NOT NULL) OR (src.LYLTY_ACCT_OPEN_DT IS NOT NULL AND tgt.LYLTY_ACCT_OPEN_DT IS NULL) OR src.LYLTY_ACCT_CLOSE_DT <> tgt.LYLTY_ACCT_CLOSE_DT OR (src.LYLTY_ACCT_CLOSE_DT IS NULL AND tgt.LYLTY_ACCT_CLOSE_DT IS NOT NULL) OR (src.LYLTY_ACCT_CLOSE_DT IS NOT NULL AND tgt.LYLTY_ACCT_CLOSE_DT IS NULL) OR src.LYLTY_ACCT_ENROLL_DT <> tgt.LYLTY_ACCT_ENROLL_DT OR (src.LYLTY_ACCT_ENROLL_DT IS NULL AND tgt.LYLTY_ACCT_ENROLL_DT IS NOT NULL) OR (src.LYLTY_ACCT_ENROLL_DT IS NOT NULL AND tgt.LYLTY_ACCT_ENROLL_DT IS NULL) OR src.NEXT_CONVRSN_STTS <> tgt.NEXT_CONVRSN_STTS OR (src.NEXT_CONVRSN_STTS IS NULL AND tgt.NEXT_CONVRSN_STTS IS NOT NULL) OR (src.NEXT_CONVRSN_STTS IS NOT NULL AND tgt.NEXT_CONVRSN_STTS IS NULL) OR src.NCOA_LAST_CNG_DT <> tgt.NCOA_LAST_CNG_DT OR (src.NCOA_LAST_CNG_DT IS NULL AND tgt.NCOA_LAST_CNG_DT IS NOT NULL) OR (src.NCOA_LAST_CNG_DT IS NOT NULL AND tgt.NCOA_LAST_CNG_DT IS NULL) OR src.LYLTY_ENRLMNT_LOC_KEY <> tgt.LYLTY_ENRLMNT_LOC_KEY OR (src.LYLTY_ENRLMNT_LOC_KEY IS NULL AND tgt.LYLTY_ENRLMNT_LOC_KEY IS NOT NULL) OR (src.LYLTY_ENRLMNT_LOC_KEY IS NOT NULL AND tgt.LYLTY_ENRLMNT_LOC_KEY IS NULL) OR src.LYLTY_ENRLMNT_SRC_KEY <> tgt.LYLTY_ENRLMNT_SRC_KEY OR (src.LYLTY_ENRLMNT_SRC_KEY IS NULL AND tgt.LYLTY_ENRLMNT_SRC_KEY IS NOT NULL) OR (src.LYLTY_ENRLMNT_SRC_KEY IS NOT NULL AND tgt.LYLTY_ENRLMNT_SRC_KEY IS NULL) OR src.PLCC_OPEN_DT <> tgt.PLCC_OPEN_DT OR (src.PLCC_OPEN_DT IS NULL AND tgt.PLCC_OPEN_DT IS NOT NULL) OR (src.PLCC_OPEN_DT IS NOT NULL AND tgt.PLCC_OPEN_DT IS NULL) OR src.PLCC_CLOSE_DT <> tgt.PLCC_CLOSE_DT OR (src.PLCC_CLOSE_DT IS NULL AND tgt.PLCC_CLOSE_DT IS NOT NULL) OR (src.PLCC_CLOSE_DT IS NOT NULL AND tgt.PLCC_CLOSE_DT IS NULL) OR src.PRIMARY_LOC_KEY <> tgt.PRIMARY_LOC_KEY OR (src.PRIMARY_LOC_KEY IS NULL AND tgt.PRIMARY_LOC_KEY IS NOT NULL) OR (src.PRIMARY_LOC_KEY IS NOT NULL AND tgt.PRIMARY_LOC_KEY IS NULL) OR src.SECONDARY_LOC_KEY <> tgt.SECONDARY_LOC_KEY OR (src.SECONDARY_LOC_KEY IS NULL AND tgt.SECONDARY_LOC_KEY IS NOT NULL) OR (src.SECONDARY_LOC_KEY IS NOT NULL AND tgt.SECONDARY_LOC_KEY IS NULL) OR src.LAST_TXN_DT <> tgt.LAST_TXN_DT OR (src.LAST_TXN_DT IS NULL AND tgt.LAST_TXN_DT IS NOT NULL) OR (src.LAST_TXN_DT IS NOT NULL AND tgt.LAST_TXN_DT IS NULL) OR src.LAST_STR_PURCH_DT <> tgt.LAST_STR_PURCH_DT OR (src.LAST_STR_PURCH_DT IS NULL AND tgt.LAST_STR_PURCH_DT IS NOT NULL) OR (src.LAST_STR_PURCH_DT IS NOT NULL AND tgt.LAST_STR_PURCH_DT IS NULL) OR src.LAST_WEB_PURCH_DT <> tgt.LAST_WEB_PURCH_DT OR (src.LAST_WEB_PURCH_DT IS NULL AND tgt.LAST_WEB_PURCH_DT IS NOT NULL) OR (src.LAST_WEB_PURCH_DT IS NOT NULL AND tgt.LAST_WEB_PURCH_DT IS NULL) OR src.GNDR_SHPNG_PREF_QTY <> tgt.GNDR_SHPNG_PREF_QTY OR (src.GNDR_SHPNG_PREF_QTY IS NULL AND tgt.GNDR_SHPNG_PREF_QTY IS NOT NULL) OR (src.GNDR_SHPNG_PREF_QTY IS NOT NULL AND tgt.GNDR_SHPNG_PREF_QTY IS NULL) OR src.GNDR_SHPNG_PREF_AMT <> tgt.GNDR_SHPNG_PREF_AMT OR (src.GNDR_SHPNG_PREF_AMT IS NULL AND tgt.GNDR_SHPNG_PREF_AMT IS NOT NULL) OR (src.GNDR_SHPNG_PREF_AMT IS NOT NULL AND tgt.GNDR_SHPNG_PREF_AMT IS NULL) OR src.PREFERRED_CHNL <> tgt.PREFERRED_CHNL OR (src.PREFERRED_CHNL IS NULL AND tgt.PREFERRED_CHNL IS NOT NULL) OR (src.PREFERRED_CHNL IS NOT NULL AND tgt.PREFERRED_CHNL IS NULL) OR src.DOMINANT_SHPNG_CHNL <> tgt.DOMINANT_SHPNG_CHNL OR (src.DOMINANT_SHPNG_CHNL IS NULL AND tgt.DOMINANT_SHPNG_CHNL IS NOT NULL) OR (src.DOMINANT_SHPNG_CHNL IS NOT NULL AND tgt.DOMINANT_SHPNG_CHNL IS NULL) OR src.LAST_BROWSE_DT <> tgt.LAST_BROWSE_DT OR (src.LAST_BROWSE_DT IS NULL AND tgt.LAST_BROWSE_DT IS NOT NULL) OR (src.LAST_BROWSE_DT IS NOT NULL AND tgt.LAST_BROWSE_DT IS NULL) OR src.CS_AGENT_KEY <> tgt.CS_AGENT_KEY OR (src.CS_AGENT_KEY IS NULL AND tgt.CS_AGENT_KEY IS NOT NULL) OR (src.CS_AGENT_KEY IS NOT NULL AND tgt.CS_AGENT_KEY IS NULL) OR src.EMP_AGG_KEY <> tgt.EMP_AGG_KEY OR (src.EMP_AGG_KEY IS NULL AND tgt.EMP_AGG_KEY IS NOT NULL) OR (src.EMP_AGG_KEY IS NOT NULL AND tgt.EMP_AGG_KEY IS NULL) OR src.LOC_ASSOCIATE_KEY <> tgt.LOC_ASSOCIATE_KEY OR (src.LOC_ASSOCIATE_KEY IS NULL AND tgt.LOC_ASSOCIATE_KEY IS NOT NULL) OR (src.LOC_ASSOCIATE_KEY IS NOT NULL AND tgt.LOC_ASSOCIATE_KEY IS NULL) OR src.REGSTRTN_DEVICE_TYP_CDE_KEY <> tgt.REGSTRTN_DEVICE_TYP_CDE_KEY OR (src.REGSTRTN_DEVICE_TYP_CDE_KEY IS NULL AND tgt.REGSTRTN_DEVICE_TYP_CDE_KEY IS NOT NULL) OR (src.REGSTRTN_DEVICE_TYP_CDE_KEY IS NOT NULL AND tgt.REGSTRTN_DEVICE_TYP_CDE_KEY IS NULL) OR src.REGSTRTN_DEVICE_TYP_ID <> tgt.REGSTRTN_DEVICE_TYP_ID OR (src.REGSTRTN_DEVICE_TYP_ID IS NULL AND tgt.REGSTRTN_DEVICE_TYP_ID IS NOT NULL) OR (src.REGSTRTN_DEVICE_TYP_ID IS NOT NULL AND tgt.REGSTRTN_DEVICE_TYP_ID IS NULL) OR src.REGSTRTN_CHNL_SUB_TYP_ID <> tgt.REGSTRTN_CHNL_SUB_TYP_ID OR (src.REGSTRTN_CHNL_SUB_TYP_ID IS NULL AND tgt.REGSTRTN_CHNL_SUB_TYP_ID IS NOT NULL) OR (src.REGSTRTN_CHNL_SUB_TYP_ID IS NOT NULL AND tgt.REGSTRTN_CHNL_SUB_TYP_ID IS NULL) OR src.REGSTRTN_CHNL_ID <> tgt.REGSTRTN_CHNL_ID OR (src.REGSTRTN_CHNL_ID IS NULL AND tgt.REGSTRTN_CHNL_ID IS NOT NULL) OR (src.REGSTRTN_CHNL_ID IS NOT NULL AND tgt.REGSTRTN_CHNL_ID IS NULL) OR src.TERMNTN_REASN <> tgt.TERMNTN_REASN OR (src.TERMNTN_REASN IS NULL AND tgt.TERMNTN_REASN IS NOT NULL) OR (src.TERMNTN_REASN IS NOT NULL AND tgt.TERMNTN_REASN IS NULL) OR src.LYLTY_ENRLMNT_SRC <> tgt.LYLTY_ENRLMNT_SRC OR (src.LYLTY_ENRLMNT_SRC IS NULL AND tgt.LYLTY_ENRLMNT_SRC IS NOT NULL) OR (src.LYLTY_ENRLMNT_SRC IS NOT NULL AND tgt.LYLTY_ENRLMNT_SRC IS NULL) OR src.PFCOM_FLG <> tgt.PFCOM_FLG OR (src.PFCOM_FLG IS NULL AND tgt.PFCOM_FLG IS NOT NULL) OR (src.PFCOM_FLG IS NOT NULL AND tgt.PFCOM_FLG IS NULL) OR src.PFCOM_DT <> tgt.PFCOM_DT OR (src.PFCOM_DT IS NULL AND tgt.PFCOM_DT IS NOT NULL) OR (src.PFCOM_DT IS NOT NULL AND tgt.PFCOM_DT IS NULL) OR src.PFCOM_LOC_KEY <> tgt.PFCOM_LOC_KEY OR (src.PFCOM_LOC_KEY IS NULL AND tgt.PFCOM_LOC_KEY IS NOT NULL) OR (src.PFCOM_LOC_KEY IS NOT NULL AND tgt.PFCOM_LOC_KEY IS NULL) OR src.PFCOM_ASSOCIATE_KEY <> tgt.PFCOM_ASSOCIATE_KEY OR (src.PFCOM_ASSOCIATE_KEY IS NULL AND tgt.PFCOM_ASSOCIATE_KEY IS NOT NULL) OR (src.PFCOM_ASSOCIATE_KEY IS NOT NULL AND tgt.PFCOM_ASSOCIATE_KEY IS NULL) OR src.PFCOM_CS_AGENT_KEY <> tgt.PFCOM_CS_AGENT_KEY OR (src.PFCOM_CS_AGENT_KEY IS NULL AND tgt.PFCOM_CS_AGENT_KEY IS NOT NULL) OR (src.PFCOM_CS_AGENT_KEY IS NOT NULL AND tgt.PFCOM_CS_AGENT_KEY IS NULL) OR src.PFCOM_EMP_AGG_KEY <> tgt.PFCOM_EMP_AGG_KEY OR (src.PFCOM_EMP_AGG_KEY IS NULL AND tgt.PFCOM_EMP_AGG_KEY IS NOT NULL) OR (src.PFCOM_EMP_AGG_KEY IS NOT NULL AND tgt.PFCOM_EMP_AGG_KEY IS NULL) OR src.PFCOM_SRC <> tgt.PFCOM_SRC OR (src.PFCOM_SRC IS NULL AND tgt.PFCOM_SRC IS NOT NULL) OR (src.PFCOM_SRC IS NOT NULL AND tgt.PFCOM_SRC IS NULL) OR src.PFCOM_DEVICE_TYP_CDE_KEY <> tgt.PFCOM_DEVICE_TYP_CDE_KEY OR (src.PFCOM_DEVICE_TYP_CDE_KEY IS NULL AND tgt.PFCOM_DEVICE_TYP_CDE_KEY IS NOT NULL) OR (src.PFCOM_DEVICE_TYP_CDE_KEY IS NOT NULL AND tgt.PFCOM_DEVICE_TYP_CDE_KEY IS NULL) OR src.PFCOM_DEVICE_TYP_ID <> tgt.PFCOM_DEVICE_TYP_ID OR (src.PFCOM_DEVICE_TYP_ID IS NULL AND tgt.PFCOM_DEVICE_TYP_ID IS NOT NULL) OR (src.PFCOM_DEVICE_TYP_ID IS NOT NULL AND tgt.PFCOM_DEVICE_TYP_ID IS NULL) OR src.PFCOM_CHNL_SUB_TYP_ID <> tgt.PFCOM_CHNL_SUB_TYP_ID OR (src.PFCOM_CHNL_SUB_TYP_ID IS NULL AND tgt.PFCOM_CHNL_SUB_TYP_ID IS NOT NULL) OR (src.PFCOM_CHNL_SUB_TYP_ID IS NOT NULL AND tgt.PFCOM_CHNL_SUB_TYP_ID IS NULL) OR src.PFCOM_CHNL_ID <> tgt.PFCOM_CHNL_ID OR (src.PFCOM_CHNL_ID IS NULL AND tgt.PFCOM_CHNL_ID IS NOT NULL) OR (src.PFCOM_CHNL_ID IS NOT NULL AND tgt.PFCOM_CHNL_ID IS NULL) OR src.PFCOM_RWD_FLG <> tgt.PFCOM_RWD_FLG OR (src.PFCOM_RWD_FLG IS NULL AND tgt.PFCOM_RWD_FLG IS NOT NULL) OR (src.PFCOM_RWD_FLG IS NOT NULL AND tgt.PFCOM_RWD_FLG IS NULL) OR src.PFUPD_DT <> tgt.PFUPD_DT OR (src.PFUPD_DT IS NULL AND tgt.PFUPD_DT IS NOT NULL) OR (src.PFUPD_DT IS NOT NULL AND tgt.PFUPD_DT IS NULL) OR src.YRLY_PFUPD_DT <> tgt.YRLY_PFUPD_DT OR (src.YRLY_PFUPD_DT IS NULL AND tgt.YRLY_PFUPD_DT IS NOT NULL) OR (src.YRLY_PFUPD_DT IS NOT NULL AND tgt.YRLY_PFUPD_DT IS NULL) OR src.PFUPD_LOC_KEY <> tgt.PFUPD_LOC_KEY OR (src.PFUPD_LOC_KEY IS NULL AND tgt.PFUPD_LOC_KEY IS NOT NULL) OR (src.PFUPD_LOC_KEY IS NOT NULL AND tgt.PFUPD_LOC_KEY IS NULL) OR src.PFUPD_ASSOCIATE_KEY <> tgt.PFUPD_ASSOCIATE_KEY OR (src.PFUPD_ASSOCIATE_KEY IS NULL AND tgt.PFUPD_ASSOCIATE_KEY IS NOT NULL) OR (src.PFUPD_ASSOCIATE_KEY IS NOT NULL AND tgt.PFUPD_ASSOCIATE_KEY IS NULL) OR src.PFUPD_CS_AGENT_KEY <> tgt.PFUPD_CS_AGENT_KEY OR (src.PFUPD_CS_AGENT_KEY IS NULL AND tgt.PFUPD_CS_AGENT_KEY IS NOT NULL) OR (src.PFUPD_CS_AGENT_KEY IS NOT NULL AND tgt.PFUPD_CS_AGENT_KEY IS NULL) OR src.PFUPD_EMP_AGG_KEY <> tgt.PFUPD_EMP_AGG_KEY OR (src.PFUPD_EMP_AGG_KEY IS NULL AND tgt.PFUPD_EMP_AGG_KEY IS NOT NULL) OR (src.PFUPD_EMP_AGG_KEY IS NOT NULL AND tgt.PFUPD_EMP_AGG_KEY IS NULL) OR src.PFUPD_SRC <> tgt.PFUPD_SRC OR (src.PFUPD_SRC IS NULL AND tgt.PFUPD_SRC IS NOT NULL) OR (src.PFUPD_SRC IS NOT NULL AND tgt.PFUPD_SRC IS NULL) OR src.PFUPD_DEVICE_TYP_CDE_KEY <> tgt.PFUPD_DEVICE_TYP_CDE_KEY OR (src.PFUPD_DEVICE_TYP_CDE_KEY IS NULL AND tgt.PFUPD_DEVICE_TYP_CDE_KEY IS NOT NULL) OR (src.PFUPD_DEVICE_TYP_CDE_KEY IS NOT NULL AND tgt.PFUPD_DEVICE_TYP_CDE_KEY IS NULL) OR src.PFUPD_DEVICE_TYP_ID <> tgt.PFUPD_DEVICE_TYP_ID OR (src.PFUPD_DEVICE_TYP_ID IS NULL AND tgt.PFUPD_DEVICE_TYP_ID IS NOT NULL) OR (src.PFUPD_DEVICE_TYP_ID IS NOT NULL AND tgt.PFUPD_DEVICE_TYP_ID IS NULL) OR src.PFUPD_CHNL_SUB_TYP_ID <> tgt.PFUPD_CHNL_SUB_TYP_ID OR (src.PFUPD_CHNL_SUB_TYP_ID IS NULL AND tgt.PFUPD_CHNL_SUB_TYP_ID IS NOT NULL) OR (src.PFUPD_CHNL_SUB_TYP_ID IS NOT NULL AND tgt.PFUPD_CHNL_SUB_TYP_ID IS NULL) OR src.PFUPD_CHNL_ID <> tgt.PFUPD_CHNL_ID OR (src.PFUPD_CHNL_ID IS NULL AND tgt.PFUPD_CHNL_ID IS NOT NULL) OR (src.PFUPD_CHNL_ID IS NOT NULL AND tgt.PFUPD_CHNL_ID IS NULL) OR src.YRLY_PFUPD_DEVICE_TYP_CDE_KEY <> tgt.YRLY_PFUPD_DEVICE_TYP_CDE_KEY OR (src.YRLY_PFUPD_DEVICE_TYP_CDE_KEY IS NULL AND tgt.YRLY_PFUPD_DEVICE_TYP_CDE_KEY IS NOT NULL) OR (src.YRLY_PFUPD_DEVICE_TYP_CDE_KEY IS NOT NULL AND tgt.YRLY_PFUPD_DEVICE_TYP_CDE_KEY IS NULL) OR src.YRLY_PFUPD_DEVICE_TYP_ID <> tgt.YRLY_PFUPD_DEVICE_TYP_ID OR (src.YRLY_PFUPD_DEVICE_TYP_ID IS NULL AND tgt.YRLY_PFUPD_DEVICE_TYP_ID IS NOT NULL) OR (src.YRLY_PFUPD_DEVICE_TYP_ID IS NOT NULL AND tgt.YRLY_PFUPD_DEVICE_TYP_ID IS NULL) OR src.YRLY_PFUPD_CHNL_SUB_TYP_ID <> tgt.YRLY_PFUPD_CHNL_SUB_TYP_ID OR (src.YRLY_PFUPD_CHNL_SUB_TYP_ID IS NULL AND tgt.YRLY_PFUPD_CHNL_SUB_TYP_ID IS NOT NULL) OR (src.YRLY_PFUPD_CHNL_SUB_TYP_ID IS NOT NULL AND tgt.YRLY_PFUPD_CHNL_SUB_TYP_ID IS NULL) OR src.YRLY_PFUPD_CHNL_ID <> tgt.YRLY_PFUPD_CHNL_ID OR (src.YRLY_PFUPD_CHNL_ID IS NULL AND tgt.YRLY_PFUPD_CHNL_ID IS NOT NULL) OR (src.YRLY_PFUPD_CHNL_ID IS NOT NULL AND tgt.YRLY_PFUPD_CHNL_ID IS NULL) OR src.SIGNUP_TYP <> tgt.SIGNUP_TYP OR (src.SIGNUP_TYP IS NULL AND tgt.SIGNUP_TYP IS NOT NULL) OR (src.SIGNUP_TYP IS NOT NULL AND tgt.SIGNUP_TYP IS NULL) OR src.LYLTY_TIER_KEY <> tgt.LYLTY_TIER_KEY OR (src.LYLTY_TIER_KEY IS NULL AND tgt.LYLTY_TIER_KEY IS NOT NULL) OR (src.LYLTY_TIER_KEY IS NOT NULL AND tgt.LYLTY_TIER_KEY IS NULL) OR src.TIER_FROM_DT <> tgt.TIER_FROM_DT OR (src.TIER_FROM_DT IS NULL AND tgt.TIER_FROM_DT IS NOT NULL) OR (src.TIER_FROM_DT IS NOT NULL AND tgt.TIER_FROM_DT IS NULL) OR src.TIER_TO_DT <> tgt.TIER_TO_DT OR (src.TIER_TO_DT IS NULL AND tgt.TIER_TO_DT IS NOT NULL) OR (src.TIER_TO_DT IS NOT NULL AND tgt.TIER_TO_DT IS NULL) OR src.TIER_MOVE_REASN <> tgt.TIER_MOVE_REASN OR (src.TIER_MOVE_REASN IS NULL AND tgt.TIER_MOVE_REASN IS NOT NULL) OR (src.TIER_MOVE_REASN IS NOT NULL AND tgt.TIER_MOVE_REASN IS NULL) OR src.EMP_KEY <> tgt.EMP_KEY OR (src.EMP_KEY IS NULL AND tgt.EMP_KEY IS NOT NULL) OR (src.EMP_KEY IS NOT NULL AND tgt.EMP_KEY IS NULL) OR src.IS_EMP_FLG <> tgt.IS_EMP_FLG OR (src.IS_EMP_FLG IS NULL AND tgt.IS_EMP_FLG IS NOT NULL) OR (src.IS_EMP_FLG IS NOT NULL AND tgt.IS_EMP_FLG IS NULL))
+END:************************
+
+d_cus_ld 12/31/2020 03:25:19: Updating records in DWH_D_CUS_LU completed successfully
+d_cus_ld 12/31/2020 03:25:19: ###################################################################################
+d_cus_ld 12/31/2020 03:25:19: 
+d_cus_ld 12/31/2020 03:25:19: set_activity_count
+d_cus_ld 12/31/2020 03:25:19: set_activity_count end
+Start:************************
+query_command : SELECT COUNT(*) FROM EXPDW_ETE_TMP.TMP_D_CUS_LU
+END:************************
+
+d_cus_ld 12/31/2020 03:25:19: Source     : TMP_D_CUS_LU
+d_cus_ld 12/31/2020 03:25:19: Destination: DWH_D_CUS_LU
+d_cus_ld 12/31/2020 03:25:19: SQL Statistics:
+d_cus_ld 12/31/2020 03:25:19: NO OF ROWS INSERTED: 0
+d_cus_ld 12/31/2020 03:25:19: NO OF ROWS DELETED:  0
+d_cus_ld 12/31/2020 03:25:19: No OF ROWS UPDATED:  98
+Start:************************
+query_command : MERGE INTO EXPDW_ETE_DWH.DWH_C_AUDIT_LOG AS  A
+                   USING (
+    					 SELECT 1539 BATCH_ID 
+    							,505 JOB_ID
+    							,3 LEVEL
+    					 ) AS TMP
+    					 ON A.BATCH_ID = TMP.BATCH_ID
+    					  AND A.JOB_ID = TMP.JOB_ID
+    					  AND A.LEVEL = TMP.LEVEL
+    					 WHEN MATCHED THEN UPDATE
+            					 SET NUMBERS_OF_ROW_INSERTED = NUMBERS_OF_ROW_INSERTED+0
+    					 		    ,NUMBERS_OF_ROW_UPDATED  = NUMBERS_OF_ROW_UPDATED+98
+    					 		    ,NUMBERS_OF_ROW_DELETED  = NUMBERS_OF_ROW_DELETED+0
+    					 		    ,NUMBERS_OF_ROW_REJECTED = NUMBERS_OF_ROW_REJECTED+0
+									,AUDIT_TIMESTAMP = CURRENT_TIMESTAMP
+    					 WHEN NOT MATCHED THEN INSERT
+                   			   (	 BATCH_ID                
+    									,JOB_ID                  
+    									,JOB_NAME                
+    									,BUSINESS_DATE 
+                                        ,AUDIT_TIMESTAMP										
+    									,SOURCE        
+    									,SOURCE_COUNT            
+    									,TARGET         
+    									,NUMBERS_OF_ROW_INSERTED 
+    									,NUMBERS_OF_ROW_UPDATED  
+    									,NUMBERS_OF_ROW_DELETED  
+    									,NUMBERS_OF_ROW_REJECTED
+    									,LEVEL)
+    						VALUES(  TMP.BATCH_ID     
+    								,TMP.JOB_ID
+    								,'d_cus_ld'
+    								,CAST('2020-12-29' AS DATE FORMAT 'YYYY-MM-DD')
+									,CURRENT_TIMESTAMP
+    								,'TMP_D_CUS_LU'
+    								,         98
+    								,'DWH_D_CUS_LU'
+    								,0
+    								,98
+    								,0
+    								,0
+    								,TMP.LEVEL)
+    							
+END:************************
+
+d_cus_ld 12/31/2020 03:25:19: Setting bookmark value for the script in DWH_C_BATCH_LOG table
+Start:************************
+query_command : UPDATE EXPDW_ETE_DWH.DWH_C_BATCH_LOG
+                      SET BOOKMARK='AFTER_UPDATE_USING_TEMP'
+					  ,JOB_ID=505
+                      WHERE BATCH_ID=1539
+                       AND JOB_NAME = 'd_cus_ld'
+					   AND START_TIMESTAMP='2020-12-31 03:23:06.500000'
+                     
+END:************************
+
+
+
+==============================================================================================================================================
+====================================================  RUNNING CODES FOR BOOKMARK = AFTER_UPDATE_USING_TEMP  ================================================
+==============================================================================================================================================
+
+
+d_cus_ld 12/31/2020 03:25:20: 
+d_cus_ld 12/31/2020 03:25:20: ###################################################################################
+d_cus_ld 12/31/2020 03:25:20: Inserting new records into EXPDW_ETE_DWH.DWH_D_CUS_LU from EXPDW_ETE_TMP.TMP_D_CUS_LU
+Start:************************
+query_command : INSERT INTO EXPDW_ETE_DWH.DWH_D_CUS_LU 
+								(  CUS_KEY
+								   , CUS_ID
+								   , HHLD_KEY, FIRST_NAME, FIRST_NAME_SCRBD, LAST_NAME, LAST_NAME_SCRBD, ADDRESS1, ADDRESS1_SCRBD, ADDRESS2, ADDRESS2_SCRBD, CITY, CITY_SCRBD, STATE_CDE, STATE_SCRBD, ZIP_CDE, ZIP_CODE_SCRBD, ZIP4_CDE, ZIP4_CODE_SCRBD, ZIP_FULL_CDE_SCRBD, NON_US_POSTAL_CDE, COUNTRY_CDE, COUNTRY_CDE_SCRBD, NON_US_CUS_FLG, IS_ADDRESS_VALID_FLG, IS_ADDRESS_LIKELY_VALID_FLG, IS_EMAIL_VALID_FLG, IS_PHONE_FOR_SMS_VALID_FLG, PHONE_NUM, PHONE_TYP, EMAIL_ADDRESS, GENDER_CDE, DIRECT_MAIL_CONSENT_FLG, EMAIL_CONSENT_FLG, SMS_CONSENT_FLG, BIRTH_DT, AGE, AGE_GRP_CDE, AGE_QUALIFIER, DECEASED_FLG, ADDRESS_IS_PRISON_FLG, ADD_DT, INTRODCTN_DT, LATITUDE, LONGITUDE, CLOSEST_LOC_KEY, DIST_TO_CLOSEST_LOC, SECOND_CLOSEST_LOC_KEY, DIST_TO_SEC_CLOSEST_LOC, PREFERRED_LOC_KEY, DIST_TO_PREFERRED_LOC, FIRST_TXN_DT, FIRST_TXN_LOC_KEY, BRAND_FIRST_TXN_DT, ADS_DONOT_STATMNT_INS_IND, ADS_DONOT_SELL_NAME_IND, ADS_SPAM_IND, ADS_EMAIL_CHANGE_DT, ADS_RTRN_MAIL_FLG, IS_DM_MARKETABLE_FLG, IS_EM_MARKETABLE_FLG, IS_SMS_MARKETABLE_FLG, RCD_TYP, EMAIL_CONSENT_DT, SMS_CONSENT_DT, DIRECT_MAIL_CONSENT_DT, LYLTY_ID, HAS_PLCC_FLG, IS_LYLTY_MEMBER_FLG, IS_ALIST_FLG, LYLTY_TIER, LYLTY_MEMBER_STTS, LYLTY_ACCT_OPEN_DT, LYLTY_ACCT_CLOSE_DT, LYLTY_ACCT_ENROLL_DT, NEXT_CONVRSN_STTS, NCOA_LAST_CNG_DT, LYLTY_ENRLMNT_LOC_KEY, LYLTY_ENRLMNT_SRC_KEY, PLCC_OPEN_DT, PLCC_CLOSE_DT, PRIMARY_LOC_KEY, SECONDARY_LOC_KEY, LAST_TXN_DT, LAST_STR_PURCH_DT, LAST_WEB_PURCH_DT, GNDR_SHPNG_PREF_QTY, GNDR_SHPNG_PREF_AMT, PREFERRED_CHNL, DOMINANT_SHPNG_CHNL, LAST_BROWSE_DT, CS_AGENT_KEY, EMP_AGG_KEY, LOC_ASSOCIATE_KEY, REGSTRTN_DEVICE_TYP_CDE_KEY, REGSTRTN_DEVICE_TYP_ID, REGSTRTN_CHNL_SUB_TYP_ID, REGSTRTN_CHNL_ID, TERMNTN_REASN, LYLTY_ENRLMNT_SRC, PFCOM_FLG, PFCOM_DT, PFCOM_LOC_KEY, PFCOM_ASSOCIATE_KEY, PFCOM_CS_AGENT_KEY, PFCOM_EMP_AGG_KEY, PFCOM_SRC, PFCOM_DEVICE_TYP_CDE_KEY, PFCOM_DEVICE_TYP_ID, PFCOM_CHNL_SUB_TYP_ID, PFCOM_CHNL_ID, PFCOM_RWD_FLG, PFUPD_DT, YRLY_PFUPD_DT, PFUPD_LOC_KEY, PFUPD_ASSOCIATE_KEY, PFUPD_CS_AGENT_KEY, PFUPD_EMP_AGG_KEY, PFUPD_SRC, PFUPD_DEVICE_TYP_CDE_KEY, PFUPD_DEVICE_TYP_ID, PFUPD_CHNL_SUB_TYP_ID, PFUPD_CHNL_ID, YRLY_PFUPD_DEVICE_TYP_CDE_KEY, YRLY_PFUPD_DEVICE_TYP_ID, YRLY_PFUPD_CHNL_SUB_TYP_ID, YRLY_PFUPD_CHNL_ID, SIGNUP_TYP, LYLTY_TIER_KEY, TIER_FROM_DT, TIER_TO_DT, TIER_MOVE_REASN, EMP_KEY, IS_EMP_FLG
+								   , RCD_INS_TS
+								   , RCD_UPD_TS
+								   
+							   )
+								SELECT COALESCE((SELECT MAX(CUS_KEY) FROM EXPDW_ETE_DWH_V.V_DWH_D_CUS_LU WHERE CUS_KEY>=0), 0) + RANK() OVER (ORDER BY CUS_ID)
+								   , CUS_ID
+								   , HHLD_KEY, FIRST_NAME, FIRST_NAME_SCRBD, LAST_NAME, LAST_NAME_SCRBD, ADDRESS1, ADDRESS1_SCRBD, ADDRESS2, ADDRESS2_SCRBD, CITY, CITY_SCRBD, STATE_CDE, STATE_SCRBD, ZIP_CDE, ZIP_CODE_SCRBD, ZIP4_CDE, ZIP4_CODE_SCRBD, ZIP_FULL_CDE_SCRBD, NON_US_POSTAL_CDE, COUNTRY_CDE, COUNTRY_CDE_SCRBD, NON_US_CUS_FLG, IS_ADDRESS_VALID_FLG, IS_ADDRESS_LIKELY_VALID_FLG, IS_EMAIL_VALID_FLG, IS_PHONE_FOR_SMS_VALID_FLG, PHONE_NUM, PHONE_TYP, EMAIL_ADDRESS, GENDER_CDE, DIRECT_MAIL_CONSENT_FLG, EMAIL_CONSENT_FLG, SMS_CONSENT_FLG, BIRTH_DT, AGE, AGE_GRP_CDE, AGE_QUALIFIER, DECEASED_FLG, ADDRESS_IS_PRISON_FLG, ADD_DT, INTRODCTN_DT, LATITUDE, LONGITUDE, CLOSEST_LOC_KEY, DIST_TO_CLOSEST_LOC, SECOND_CLOSEST_LOC_KEY, DIST_TO_SEC_CLOSEST_LOC, PREFERRED_LOC_KEY, DIST_TO_PREFERRED_LOC, FIRST_TXN_DT, FIRST_TXN_LOC_KEY, BRAND_FIRST_TXN_DT, ADS_DONOT_STATMNT_INS_IND, ADS_DONOT_SELL_NAME_IND, ADS_SPAM_IND, ADS_EMAIL_CHANGE_DT, ADS_RTRN_MAIL_FLG, IS_DM_MARKETABLE_FLG, IS_EM_MARKETABLE_FLG, IS_SMS_MARKETABLE_FLG, RCD_TYP, EMAIL_CONSENT_DT, SMS_CONSENT_DT, DIRECT_MAIL_CONSENT_DT, LYLTY_ID, HAS_PLCC_FLG, IS_LYLTY_MEMBER_FLG, IS_ALIST_FLG, LYLTY_TIER, LYLTY_MEMBER_STTS, LYLTY_ACCT_OPEN_DT, LYLTY_ACCT_CLOSE_DT, LYLTY_ACCT_ENROLL_DT, NEXT_CONVRSN_STTS, NCOA_LAST_CNG_DT, LYLTY_ENRLMNT_LOC_KEY, LYLTY_ENRLMNT_SRC_KEY, PLCC_OPEN_DT, PLCC_CLOSE_DT, PRIMARY_LOC_KEY, SECONDARY_LOC_KEY, LAST_TXN_DT, LAST_STR_PURCH_DT, LAST_WEB_PURCH_DT, GNDR_SHPNG_PREF_QTY, GNDR_SHPNG_PREF_AMT, PREFERRED_CHNL, DOMINANT_SHPNG_CHNL, LAST_BROWSE_DT, CS_AGENT_KEY, EMP_AGG_KEY, LOC_ASSOCIATE_KEY, REGSTRTN_DEVICE_TYP_CDE_KEY, REGSTRTN_DEVICE_TYP_ID, REGSTRTN_CHNL_SUB_TYP_ID, REGSTRTN_CHNL_ID, TERMNTN_REASN, LYLTY_ENRLMNT_SRC, PFCOM_FLG, PFCOM_DT, PFCOM_LOC_KEY, PFCOM_ASSOCIATE_KEY, PFCOM_CS_AGENT_KEY, PFCOM_EMP_AGG_KEY, PFCOM_SRC, PFCOM_DEVICE_TYP_CDE_KEY, PFCOM_DEVICE_TYP_ID, PFCOM_CHNL_SUB_TYP_ID, PFCOM_CHNL_ID, PFCOM_RWD_FLG, PFUPD_DT, YRLY_PFUPD_DT, PFUPD_LOC_KEY, PFUPD_ASSOCIATE_KEY, PFUPD_CS_AGENT_KEY, PFUPD_EMP_AGG_KEY, PFUPD_SRC, PFUPD_DEVICE_TYP_CDE_KEY, PFUPD_DEVICE_TYP_ID, PFUPD_CHNL_SUB_TYP_ID, PFUPD_CHNL_ID, YRLY_PFUPD_DEVICE_TYP_CDE_KEY, YRLY_PFUPD_DEVICE_TYP_ID, YRLY_PFUPD_CHNL_SUB_TYP_ID, YRLY_PFUPD_CHNL_ID, SIGNUP_TYP, LYLTY_TIER_KEY, TIER_FROM_DT, TIER_TO_DT, TIER_MOVE_REASN, EMP_KEY, IS_EMP_FLG
+								   , CAST('20201231032302' AS TIMESTAMP FORMAT 'YYYYMMDDHHMISS')
+								   , CAST('20201231032302' AS TIMESTAMP FORMAT 'YYYYMMDDHHMISS')
+								   
+								FROM EXPDW_ETE_TMP.TMP_D_CUS_LU  src
+								WHERE NOT EXISTS
+								 (SELECT 1 
+									FROM EXPDW_ETE_DWH_V.V_DWH_D_CUS_LU tgt WHERE src.CUS_ID=tgt.CUS_ID )
+								  
+END:************************
+
+d_cus_ld 12/31/2020 03:25:34: Inserting new records into DWH_D_CUS_LU completed successfully
+d_cus_ld 12/31/2020 03:25:34: ###################################################################################
+d_cus_ld 12/31/2020 03:25:34: 
+d_cus_ld 12/31/2020 03:25:34: set_activity_count
+d_cus_ld 12/31/2020 03:25:34: set_activity_count end
+Start:************************
+query_command : SELECT COUNT(*) FROM EXPDW_ETE_TMP.TMP_D_CUS_LU
+END:************************
+
+d_cus_ld 12/31/2020 03:25:34: Source     : TMP_D_CUS_LU
+d_cus_ld 12/31/2020 03:25:34: Destination: DWH_D_CUS_LU
+d_cus_ld 12/31/2020 03:25:34: SQL Statistics:
+d_cus_ld 12/31/2020 03:25:34: NO OF ROWS INSERTED: 0
+d_cus_ld 12/31/2020 03:25:34: NO OF ROWS DELETED:  0
+d_cus_ld 12/31/2020 03:25:34: No OF ROWS UPDATED:  0
+Start:************************
+query_command : MERGE INTO EXPDW_ETE_DWH.DWH_C_AUDIT_LOG AS  A
+                   USING (
+    					 SELECT 1539 BATCH_ID 
+    							,505 JOB_ID
+    							,3 LEVEL
+    					 ) AS TMP
+    					 ON A.BATCH_ID = TMP.BATCH_ID
+    					  AND A.JOB_ID = TMP.JOB_ID
+    					  AND A.LEVEL = TMP.LEVEL
+    					 WHEN MATCHED THEN UPDATE
+            					 SET NUMBERS_OF_ROW_INSERTED = NUMBERS_OF_ROW_INSERTED+0
+    					 		    ,NUMBERS_OF_ROW_UPDATED  = NUMBERS_OF_ROW_UPDATED+0
+    					 		    ,NUMBERS_OF_ROW_DELETED  = NUMBERS_OF_ROW_DELETED+0
+    					 		    ,NUMBERS_OF_ROW_REJECTED = NUMBERS_OF_ROW_REJECTED+0
+									,AUDIT_TIMESTAMP = CURRENT_TIMESTAMP
+    					 WHEN NOT MATCHED THEN INSERT
+                   			   (	 BATCH_ID                
+    									,JOB_ID                  
+    									,JOB_NAME                
+    									,BUSINESS_DATE 
+                                        ,AUDIT_TIMESTAMP										
+    									,SOURCE        
+    									,SOURCE_COUNT            
+    									,TARGET         
+    									,NUMBERS_OF_ROW_INSERTED 
+    									,NUMBERS_OF_ROW_UPDATED  
+    									,NUMBERS_OF_ROW_DELETED  
+    									,NUMBERS_OF_ROW_REJECTED
+    									,LEVEL)
+    						VALUES(  TMP.BATCH_ID     
+    								,TMP.JOB_ID
+    								,'d_cus_ld'
+    								,CAST('2020-12-29' AS DATE FORMAT 'YYYY-MM-DD')
+									,CURRENT_TIMESTAMP
+    								,'TMP_D_CUS_LU'
+    								,         98
+    								,'DWH_D_CUS_LU'
+    								,0
+    								,0
+    								,0
+    								,0
+    								,TMP.LEVEL)
+    							
+END:************************
+
+d_cus_ld 12/31/2020 03:25:35: Setting bookmark value for the script in DWH_C_BATCH_LOG table
+Start:************************
+query_command : UPDATE EXPDW_ETE_DWH.DWH_C_BATCH_LOG
+                      SET BOOKMARK='AFTER_INSERT_FROM_TEMP'
+					  ,JOB_ID=505
+                      WHERE BATCH_ID=1539
+                       AND JOB_NAME = 'd_cus_ld'
+					   AND START_TIMESTAMP='2020-12-31 03:23:06.500000'
+                     
+END:************************
+
+
+
+==============================================================================================================================================
+====================================================  RUNNING CODES FOR BOOKMARK = AFTER_INSERT_FROM_TEMP  ================================================
+==============================================================================================================================================
+
+
+d_cus_ld 12/31/2020 03:25:35: DWH_D_CUS_LU Load Complete
+d_cus_ld 12/31/2020 03:25:35: Collecting Statistics for DWH_D_CUS_LU
+Start:************************
+query_command : 
+	COLLECT STATS COLUMN(CUS_ID)
+		, COLUMN(CUS_KEY)
+	ON EXPDW_ETE_DWH.DWH_D_CUS_LU;
+	
+END:************************
+
+d_cus_ld 12/31/2020 03:25:52: DWH_D_CUS_LU Statistics collected successfully
+d_cus_ld 12/31/2020 03:25:52: Setting bookmark value for the script in DWH_C_BATCH_LOG table
+Start:************************
+query_command : UPDATE EXPDW_ETE_DWH.DWH_C_BATCH_LOG
+                      SET BOOKMARK='AFTER_COLLECT_STATS_TARGET_TABLE'
+					  ,JOB_ID=505
+                      WHERE BATCH_ID=1539
+                       AND JOB_NAME = 'd_cus_ld'
+					   AND START_TIMESTAMP='2020-12-31 03:23:06.500000'
+                     
+END:************************
+
+
+
+==============================================================================================================================================
+====================================================  RUNNING CODES FOR BOOKMARK = AFTER_COLLECT_STATS_TARGET_TABLE  ================================================
+==============================================================================================================================================
+
+
+d_cus_ld 12/31/2020 03:25:52: Adding checksum to data file for archiving
+/batch/ete/data/customer/customer/d_cus_lu_20201231025220.TXT
+d_cus_ld 12/31/2020 03:25:52: Archiving data file from /batch/ete/data/customer/customer/d_cus_lu_20201231025220.TXT to /batch/ete/data/customer/data_archive/
+d_cus_ld 12/31/2020 03:25:52: Setting bookmark value for the script in DWH_C_BATCH_LOG table
+Start:************************
+query_command : UPDATE EXPDW_ETE_DWH.DWH_C_BATCH_LOG
+                      SET BOOKMARK='DONE'
+					  ,JOB_ID=505
+                      WHERE BATCH_ID=1539
+                       AND JOB_NAME = 'd_cus_ld'
+					   AND START_TIMESTAMP='2020-12-31 03:23:06.500000'
+                     
+END:************************
+
+
+
+==============================================================================================================================================
+====================================================  RUNNING CODES FOR BOOKMARK = DONE  ================================================
+==============================================================================================================================================
+
+
+d_cus_ld 12/31/2020 03:25:52: Script Successful
+Start:************************
+query_command : UPDATE EXPDW_ETE_DWH.DWH_C_BATCH_LOG 
+                     SET      
+                            END_TIMESTAMP = CURRENT_TIMESTAMP
+                            ,STATUS='COMPLETE'
+							,JOB_ID='505'
+							,ERROR_DETAIL='COMPLETE'
+							,BOOKMARK='COMPLETE'
+                     WHERE BATCH_ID='1539'
+							AND JOB_NAME='d_cus_ld'
+							AND START_TIMESTAMP='2020-12-31 03:23:06.500000'
+END:************************
+

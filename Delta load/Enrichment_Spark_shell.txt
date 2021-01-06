@@ -1,0 +1,57 @@
+
+//create hive context
+val hiveContext = new org.apache.spark.sql.SQLContext(sc)
+--------------------------------------------------------------------------------------------------------
+//Dim store Dataframe
+val dimStoreDF = hiveContext.table("gold.dim_store_master").where("status = 'current' and open_closed_ind='OPEN'").select( "store_id", "store_key")
+ 
+//Dim Member Dataframe 
+val dimMemberDF = hiveContext.sql(s"select member_key,valid_email,email_address,email_consent,email_consent_date,last_name,address1_scrubbed," +
+      s"address2_scrubbed,address1,address2,zip_code_scrubbed,direct_mail_consent,is_dm_marketable,is_sms_marketable,is_em_marketable,record_type,phone_type,phone_nbr," +
+      s"sms_consent,sms_consent_date,zip_code,address_is_prison,last_name_scrubbed,zip4_scrubbed,zip_full_scrubbed,deceased,first_trxn_date,first_trxn_store_key," +
+      s"last_web_purch_date,last_store_purch_date,preferred_channel,preferred_store_key,distance_to_preferred_store,preferred_store_state," +
+      s"closest_store_key,distance_to_closest_store,closest_store_state,second_closest_store_key,distance_to_sec_closest_store,latitude,longitude," +
+      s"second_closest_store_state,best_household_member,is_loyalty_member,member_status,loyalty_id,global_opt_out,current_source_key,ip_code,current_tier_key,tier_name," +
+      s"household_key,direct_mail_consent_date,is_plcc_request,is_express_plcc, cs_agent_id, cs_agent_key," +
+      s"profile_complete_store_id, profile_complete_store_key " +
+      s"from gold.dim_member where status = 'current'").withColumn("action_flag", lit("NC"))
+
+
+//Dim member Dataframe new one
+val dimMemberDF = hiveContext.sql(s"select member_id, member_key,valid_email,email_address,email_consent,email_consent_date,last_name,address1_scrubbed," +
+      s"address2_scrubbed,address1,address2,zip_code_scrubbed,direct_mail_consent,is_dm_marketable,is_sms_marketable,is_em_marketable,record_type,phone_type,phone_nbr," +
+      s"sms_consent,sms_consent_date,zip_code,address_is_prison,last_name_scrubbed,zip4_scrubbed,zip_full_scrubbed,deceased,first_trxn_date,first_trxn_store_key," +
+      s"last_web_purch_date,last_store_purch_date,preferred_channel,preferred_store_key,distance_to_preferred_store,preferred_store_state," +
+      s"closest_store_key,distance_to_closest_store,closest_store_state,second_closest_store_key,distance_to_sec_closest_store,latitude,longitude," +
+      s"second_closest_store_state,best_household_member,is_loyalty_member,member_status,loyalty_id,global_opt_out,current_source_key,ip_code,current_tier_key,tier_name," +
+      s"household_key,direct_mail_consent_date,is_plcc_request,is_express_plcc, profile_complete_flag, profile_complete_date,profile_complete_store_id, profile_complete_store_key," +
+      s"profile_complete_store_associate_id, cs_agent_id, cs_agent_key, profile_complete_source,profile_complete_device_type,profile_complete_rewarded, profile_update_date," +
+      s"profile_complete_csagent_id, profile_complete_csagent_key, profile_update_store_id, profile_update_store_key, profile_update_store_associate_id " +
+      s"profile_update_csagent_id, profile_update_csagent_key, profile_update_source, profile_update_device_type " +
+      s"from gold.dim_member where status = 'current' ").withColumn("action_flag", lit("NC"))
+
+//Join two Dataframe	    
+val resultDF = dimMemberDF.join(dimStoreDF, col("profile_complete_store_id") === col("store_id"), "left").withColumn("profile_complete_store_key", coalesce(col("store_key")))
+
+resultDF.select("profile_complete_store_id","profile_complete_store_key").show()
+
+-----------------------------------------------------------------------------------------------------------
+//Create Cs Agent Dataframe
+val dimCsAgentDF = hiveContext.table("gold.dim_cs_agent").select( "cs_agent_id", "cs_agent_key").withColumnRenamed("cs_agent_key", "lu_cs_agent_key")
+
+val dimCsAgentDF = hiveContext.table(s"gold.dim_cs_agent").where("cs_agent_id is not null").select( "cs_agent_id", "cs_agent_key").withColumnRenamed("cs_agent_key", "lu_cs_agent_key")
+
+val resultDF = dimMemberDF.join(dimCsAgentDF, Seq("cs_agent_id"), "left").withColumn("cs_agent_key",coalesce(col("lu_cs_agent_key")))
+resultDF.select("cs_agent_id","cs_agent_key").show()
+------------------------------------------------------------------------------------------------------
+resultDF.printSchema()
+resultDF.show()
+----------------------------------------------------------------------------------------------------------------
+//Hive Write
+resultDF.write.mode("append").saveAsTable("work.dim_member")
+resultDF.write.format("Hive").mode(SaveMode.Append).saveAsTable("work.dim_member")
+resultDF.partitionBy("process").write.insertInto("work.dim_member")
+resultDF.write.mode("append").partitionBy("process").insertInto("work.dim_member")
+
+select cs_agent_id, cs_agent_key from work.dim_member;
+-------------------------------------------------------------------------------------------------------------

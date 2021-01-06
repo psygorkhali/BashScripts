@@ -1,0 +1,1003 @@
+f_points_cus_day_ld 12/25/2020 04:13:08: Getting Module Type from DWH_C_BATCH_SCRIPTS
+Start:************************
+query_command : SELECT MODULE_TYP FROM EXPDW_ETE_DWH_V.V_DWH_C_BATCH_SCRIPTS WHERE LOWER(SCRIPT_NAME)=LOWER('f_points_cus_day_ld')
+END:************************
+
+f_points_cus_day_ld 12/25/2020 04:13:09: The current Module Type is : NTLY
+
+f_points_cus_day_ld 12/25/2020 04:13:09: Getting Module Load Type from DWH_C_BATCH_SCRIPTS
+Start:************************
+query_command : SELECT MODULE_LOAD_TYP FROM EXPDW_ETE_DWH_V.V_DWH_C_BATCH_SCRIPTS WHERE LOWER(SCRIPT_NAME)=LOWER('f_points_cus_day_ld')
+END:************************
+
+f_points_cus_day_ld 12/25/2020 04:13:09: The current Module Load Type is : NA
+f_points_cus_day_ld 12/25/2020 04:13:09: Getting Batch ID from DWH_C_BATCH_LOG
+Start:************************
+query_command : SELECT CAST(COALESCE(MAX(BATCH_ID),0) AS VARCHAR(20) ) FROM EXPDW_ETE_DWH_V.V_DWH_C_BATCH_LOG WHERE MODULE_NAME='NTLY'
+END:************************
+
+f_points_cus_day_ld 12/25/2020 04:13:09: The current Batch ID is : 1535
+
+f_points_cus_day_ld 12/25/2020 04:13:09: Getting Job Id from DWH_C_BATCH_SCRIPTS
+Start:************************
+query_command : SELECT TRIM(JOB_ID) FROM EXPDW_ETE_DWH_V.V_DWH_C_BATCH_SCRIPTS WHERE LOWER(SCRIPT_NAME)=LOWER('f_points_cus_day_ld')
+END:************************
+
+f_points_cus_day_ld 12/25/2020 04:13:09: The current Job ID is : 1140
+
+f_points_cus_day_ld 12/25/2020 04:13:09: Getting bookmark from DWH_C_BATCH_LOG table
+Start:************************
+query_command : SELECT BOOKMARK FROM
+						(SELECT BOOKMARK,ROW_NUMBER() OVER (PARTITION BY JOB_NAME,BATCH_ID ORDER BY START_TIMESTAMP DESC,JOB_ID DESC) RNK FROM EXPDW_ETE_DWH_V.V_DWH_C_BATCH_LOG
+							WHERE  JOB_NAME = 'f_points_cus_day_ld'
+							AND BATCH_ID = 1535
+							AND STATUS='RESTART') AA
+						WHERE RNK=1
+							
+END:************************
+
+f_points_cus_day_ld 12/25/2020 04:13:09: The bookmark is : NONE
+f_points_cus_day_ld 12/25/2020 04:13:09: Checking for run-ability of the job for the batch
+Start:************************
+query_command : SELECT 1 FROM EXPDW_ETE_DWH_V.V_DWH_C_BATCH_LOG
+						WHERE  JOB_NAME = 'f_points_cus_day_ld'
+								AND BATCH_ID = 1535
+								AND STATUS IN ('COMPLETE','ERROR')
+						
+END:************************
+
+f_points_cus_day_ld 12/25/2020 04:13:10: Job ready for the run for the batch
+
+
+==============================================================================================================================================
+====================================================  RUNNING CODES FOR BOOKMARK = NONE  ================================================
+==============================================================================================================================================
+
+
+f_points_cus_day_ld 12/25/2020 04:13:10: Getting Current Date
+Start:************************
+query_command : SELECT PARAM_VALUE FROM EXPDW_ETE_DWH_V.V_DWH_C_PARAM WHERE  PARAM_NAME='BUSINESS_DATE'
+END:************************
+
+f_points_cus_day_ld 12/25/2020 04:13:10: Current date for the job = 2020-12-23
+
+f_points_cus_day_ld 12/25/2020 04:13:10: Getting load mode for the job
+Start:************************
+query_command : SELECT PARAM_VALUE FROM EXPDW_ETE_DWH_V.V_DWH_C_PARAM WHERE PARAM_NAME='Insert Mode'
+END:************************
+
+f_points_cus_day_ld 12/25/2020 04:13:10: The load mode for the job = Full
+
+f_points_cus_day_ld 12/25/2020 04:13:10: Getting primary currency for the job
+Start:************************
+query_command : SELECT PARAM_VALUE FROM EXPDW_ETE_DWH_V.V_DWH_C_PARAM WHERE PARAM_NAME='Primary Currency'
+END:************************
+
+f_points_cus_day_ld 12/25/2020 04:13:10: The primary currency for the job = USD
+
+f_points_cus_day_ld 12/25/2020 04:13:10: f_points_cus_day_ld Started
+f_points_cus_day_ld 12/25/2020 04:13:10: Getting current time-stamp for the job execution
+Start:************************
+query_command : SELECT CAST(CURRENT_TIMESTAMP AS TIMESTAMP(6))
+END:************************
+
+f_points_cus_day_ld 12/25/2020 04:13:10: The current time-stamp of the job = 2020-12-25 04:13:10.660000
+
+f_points_cus_day_ld 12/25/2020 04:13:10: Inserting batch log
+Start:************************
+query_command : INSERT INTO EXPDW_ETE_DWH.DWH_C_BATCH_LOG (
+                        BATCH_ID 
+    				   ,JOB_ID
+    				   ,MODULE_NAME
+    				   ,JOB_NAME
+    				   ,BUSINESS_DATE
+    				   ,START_TIMESTAMP
+    				   ,END_TIMESTAMP
+    				   ,STATUS
+    				   ,ERROR_DETAIL
+    				   ,BOOKMARK
+    				   ,LOGFILE)
+                   SELECT 1535
+                         ,1140
+                         ,'NTLY'
+                        ,'f_points_cus_day_ld'
+    					 ,'2020-12-23'
+                         ,'2020-12-25 04:13:10.660000'
+                         ,CAST('9999-09-09' AS DATE FORMAT 'YYYY-MM-DD')
+                         ,'RUNNING'
+                         ,'RUNNING'
+                         ,'NONE'
+                         ,'/batch/ete/log/f_points_cus_day_ld_20201225041308.log'
+                   
+END:************************
+
+Truncate Staging Table
+f_points_cus_day_ld 12/25/2020 04:13:10: Truncating table STG_F_POINTS_CUS_DAY_B
+Start:************************
+query_command : DELETE FROM EXPDW_ETE_STG.STG_F_POINTS_CUS_DAY_B ALL
+END:************************
+
+f_points_cus_day_ld 12/25/2020 04:13:11: STG_F_POINTS_CUS_DAY_B truncated successfully
+f_points_cus_day_ld 12/25/2020 04:13:11: Checking availability of error1 table
+Start:************************
+query_command : SELECT count(*) FROM dbc.tables WHERE databasename='EXPDW_ETE_STG' and tablename='ERR1_F_POINTS_CUS_DAY_B'
+END:************************
+
+f_points_cus_day_ld 12/25/2020 04:13:11: Checking availability of error2 table
+Start:************************
+query_command : SELECT count(*) FROM dbc.tables WHERE databasename='EXPDW_ETE_STG' and tablename='ERR2_F_POINTS_CUS_DAY_B'
+END:************************
+
+f_points_cus_day_ld 12/25/2020 04:13:11: Checking file integrity edw_points_20201225.txt
+f_points_cus_day_ld 12/25/2020 04:13:11: Checking integrity of the file 
+FILE_NAME=/batch/ete/data/customer/points/edw_points_20201225.txt
+f_points_cus_day_ld 12/25/2020 04:13:11: md5value: 15ba920a26da11b0f342794596ba1c25
+f_points_cus_day_ld 12/25/2020 04:13:11: No of rows :325538
+mv /batch/ete/data/customer/points/edw_points_20201225.txt_temp /batch/ete/data/customer/points/edw_points_20201225.txt
+rm -f /batch/ete/data/customer/points/edw_points_20201225.txt_temp
+f_points_cus_day_ld 12/25/2020 04:13:11: md5value: 15ba920a26da11b0f342794596ba1c25
+f_points_cus_day_ld 12/25/2020 04:13:11: No of rows :325538
+f_points_cus_day_ld 12/25/2020 04:13:11: 15ba920a26da11b0f342794596ba1c25 and count   325538
+f_points_cus_day_ld 12/25/2020 04:13:11: Loading STG_F_POINTS_CUS_DAY_B
+Start:************************
+query_command : SELECT
+    CASE WHEN ColumnId = (min(ColumnId) over (order by ColumnId)) THEN ' ' ELSE ',' END
+    || ColumnName
+    || '(VARCHAR('
+    || CASE WHEN ColumnType = 'I1' THEN '4' /* ByteInt */
+            WHEN ColumnType = 'I2' THEN '6' /* SmallInt */
+            WHEN ColumnType = 'I ' THEN '11' /* Integer */
+            WHEN ColumnType = 'I8' THEN '20' /* BigInt */
+            WHEN ColumnType = 'D ' THEN TRIM(DecimalTotalDigits + 1) /* Decimal */
+            WHEN ColumnType in ('CV','CF','BV','BF') THEN TRIM(CAST(ColumnLength AS INTEGER)) /* VARCHAR,CHAR,VARBYTEBYTE */
+            WHEN ColumnType = 'DA' THEN '10' /* DATE */
+            WHEN ColumnType = 'AT' THEN TRIM(9 + DecimalFractionalDigits) /* Time */
+            WHEN ColumnType = 'TS' THEN TRIM(20 + DecimalFractionalDigits) /* TIMESTAMP */
+       ELSE '255' END
+    || '))'
+    FROM DBC.COLUMNS WHERE UPPER(TableName) = UPPER('STG_F_POINTS_CUS_DAY_B') AND UPPER(DatabaseName) = UPPER('EXPDW_ETE_STG')
+    
+END:************************
+
+     ===================================================================
+     =                                                                 =
+     =          FASTLOAD UTILITY     VERSION 15.10.00.00               =
+     =          PLATFORM LINUX                                         =
+     =          PID      21299                                         =
+     =                                                                 =
+     ===================================================================
+
+     ===================================================================
+     =                                                                 =
+     =          Copyright 1984-2015, Teradata Corporation.             =
+     =          ALL RIGHTS RESERVED.                                   =
+     =                                                                 =
+     ===================================================================
+
+**** 04:13:11 Processing starting at: Fri Dec 25 04:13:11 2020
+
+0001 	.sessions 10
+
+**** 04:13:11 FDL4866 SESSIONS command accepted
+
+     ===================================================================
+     =                                                                 =
+     =          Logon/Connection                                       =
+     =                                                                 =
+     ===================================================================
+
+0002 	.LOGON expdwdn.expressco.com/expeadm,
+
+**** 04:13:11 Teradata Database Release: 15.10.07.15
+**** 04:13:11 Teradata Database Version: 15.10.07.15
+**** 04:13:11 Number of AMPs available: 80
+**** 04:13:11 Current CLI or RDBMS allows maximum row size: 64K
+**** 04:13:11 Character set for this job: ASCII
+
+0003 	DATABASE EXPDW_ETE_STG;
+
+**** 04:13:12 Command completed successfully
+
+0004 	DELETE FROM EXPDW_ETE_STG.STG_F_POINTS_CUS_DAY_B ALL;
+
+**** 04:13:12 Command completed successfully
+
+0005 	RECORD 1;
+
+**** 04:13:12 Starting record number set to  : 1
+
+0006 	SET RECORD VARTEXT "|";
+
+**** 04:13:12 Now set to read 'Variable-Length Text' records
+**** 04:13:12 Delimiter character(s) is set to '|'
+**** 04:13:12 Command completed successfully
+
+0007 	DEFINE
+     	 CUS_ID                        (VARCHAR(20))
+     ,DAY_KEY                       (VARCHAR(10))
+     ,LYLTY_PROG_YR_KEY             (VARCHAR(11))
+     ,EARNED_POINTS                 (VARCHAR(9))
+     ,CUM_EARNED_POINTS             (VARCHAR(19))
+     ,CUM_PROG_YR_EARNED_POINTS     (VARCHAR(19))
+     ,CONSUMED_POINTS               (VARCHAR(9))
+     ,CUM_CONSUMED_POINTS           (VARCHAR(19))
+     ,EXPIRED_POINTS                (VARCHAR(9))
+     ,CUM_EXPIRED_POINTS            (VARCHAR(19))
+     ,AVAILABLE_POINTS              (VARCHAR(15))
+     ,RUN_DT                        (VARCHAR(10))
+     	FILE = /batch/ete/data/customer/points/edw_points_20201225.txt ;
+
+**** 04:13:12 FDL4803 DEFINE statement processed
+
+0008 	BEGIN LOADING EXPDW_ETE_STG.STG_F_POINTS_CUS_DAY_B ERRORFILES EXPDW_ETE_ST
+     G.ERR1_F_POINTS_CUS_DAY_B, EXPDW_ETE_STG.ERR2_F_POINTS_CUS_DAY_B;
+
+**** 04:13:12 Session count 28 returned by the DBS overrides
+              user-requested session count
+**** 04:13:13 Number of FastLoad sessions requested = 28
+**** 04:13:13 Number of FastLoad sessions connected = 28
+**** 04:13:13 FDL4808 LOGON successful
+**** 04:13:14 Number of AMPs available: 80
+**** 04:13:14 BEGIN LOADING COMPLETE
+
+     ===================================================================
+     =                                                                 =
+     =          Insert Phase                                           =
+     =                                                                 =
+     ===================================================================
+
+0009 	INSERT INTO EXPDW_ETE_STG.STG_F_POINTS_CUS_DAY_B.*;
+
+**** 04:13:14 Duplicate element name - CUS_ID
+**** 04:13:14 Duplicate element name - DAY_KEY
+**** 04:13:14 Duplicate element name - LYLTY_PROG_YR_KEY
+**** 04:13:14 Duplicate element name - EARNED_POINTS
+**** 04:13:14 Duplicate element name - CUM_EARNED_POINTS
+**** 04:13:14 Duplicate element name - CUM_PROG_YR_EARNED_POINTS
+**** 04:13:14 Duplicate element name - CONSUMED_POINTS
+**** 04:13:14 Duplicate element name - CUM_CONSUMED_POINTS
+**** 04:13:14 Duplicate element name - EXPIRED_POINTS
+**** 04:13:14 Duplicate element name - CUM_EXPIRED_POINTS
+**** 04:13:14 Duplicate element name - AVAILABLE_POINTS
+**** 04:13:14 Duplicate element name - RUN_DT
+**** 04:13:14 Number of recs/msg: 367
+**** 04:13:14 Starting to send to RDBMS with record 1
+**** 04:13:14 Starting row 100000
+**** 04:13:14 Starting row 200000
+**** 04:13:14 Starting row 300000
+**** 04:13:14 Sending row 325538
+**** 04:13:14 Finished sending rows to the RDBMS
+
+**** 04:13:14 Acquisition Phase statistics:
+              Elapsed time: 00:00:00 (in hh:mm:ss)
+              CPU time:     0.35 Seconds
+              MB/sec:       N/A
+              MB/cpusec:    75.54
+
+     ===================================================================
+     =                                                                 =
+     =          End Loading Phase                                      =
+     =                                                                 =
+     ===================================================================
+
+0010 	END LOADING;
+
+**** 04:13:14 END LOADING COMPLETE
+
+     Total Records Read              =  325538
+      - skipped by RECORD command    =  0
+      - sent to the RDBMS            =  325538
+     Total Error Table 1             =  0  ---- Table has been dropped
+     Total Error Table 2             =  0  ---- Table has been dropped
+     Total Inserts Applied           =  325538
+     Total Duplicate Rows            =  0
+
+     Start:   Fri Dec 25 04:13:14 2020
+     End  :   Fri Dec 25 04:13:14 2020
+
+**** 04:13:14 Application Phase statistics:
+              Elapsed time: 00:00:00 (in hh:mm:ss)
+
+0011 	.LOGOFF
+
+     ===================================================================
+     =                                                                 =
+     =          Logoff/Disconnect                                      =
+     =                                                                 =
+     ===================================================================
+
+**** 04:13:14 Logging off all sessions
+**** 04:13:15 Total processor time used = '1.57 Seconds'
+     .        Start : Fri Dec 25 04:13:11 2020
+     .        End   : Fri Dec 25 04:13:15 2020
+     .        Highest return code encountered = '0'.
+**** 04:13:15 FDL4818 FastLoad Terminated
+FORMATTED_LOG: END LOADING COMPLETE 325538 0 325538 0 0 325538 0
+OUTPUT FROM fastloadlog_parse
+err1count =
+err2count=
+f_points_cus_day_ld 12/25/2020 04:13:15: set_activity_count
+f_points_cus_day_ld 12/25/2020 04:13:15: set_activity_count end
+f_points_cus_day_ld 12/25/2020 04:13:15: Source     : edw_points_20201225.txt
+f_points_cus_day_ld 12/25/2020 04:13:15: Destination: STG_F_POINTS_CUS_DAY_B
+f_points_cus_day_ld 12/25/2020 04:13:15: SQL Statistics:
+f_points_cus_day_ld 12/25/2020 04:13:15: NO OF ROWS INSERTED: 325538
+f_points_cus_day_ld 12/25/2020 04:13:15: NO OF ROWS DELETED:  0
+f_points_cus_day_ld 12/25/2020 04:13:15: No OF ROWS UPDATED:  0
+Start:************************
+query_command : MERGE INTO EXPDW_ETE_DWH.DWH_C_AUDIT_LOG AS  A
+                   USING (
+    					 SELECT 1535 BATCH_ID 
+    							,1140 JOB_ID
+    							,1 LEVEL
+    					 ) AS TMP
+    					 ON A.BATCH_ID = TMP.BATCH_ID
+    					  AND A.JOB_ID = TMP.JOB_ID
+    					  AND A.LEVEL = TMP.LEVEL
+    					 WHEN MATCHED THEN UPDATE
+            					 SET NUMBERS_OF_ROW_INSERTED = NUMBERS_OF_ROW_INSERTED+325538
+    					 		    ,NUMBERS_OF_ROW_UPDATED  = NUMBERS_OF_ROW_UPDATED+0
+    					 		    ,NUMBERS_OF_ROW_DELETED  = NUMBERS_OF_ROW_DELETED+0
+    					 		    ,NUMBERS_OF_ROW_REJECTED = NUMBERS_OF_ROW_REJECTED+0
+									,AUDIT_TIMESTAMP = CURRENT_TIMESTAMP
+    					 WHEN NOT MATCHED THEN INSERT
+                   			   (	 BATCH_ID                
+    									,JOB_ID                  
+    									,JOB_NAME                
+    									,BUSINESS_DATE 
+                                        ,AUDIT_TIMESTAMP										
+    									,SOURCE        
+    									,SOURCE_COUNT            
+    									,TARGET         
+    									,NUMBERS_OF_ROW_INSERTED 
+    									,NUMBERS_OF_ROW_UPDATED  
+    									,NUMBERS_OF_ROW_DELETED  
+    									,NUMBERS_OF_ROW_REJECTED
+    									,LEVEL)
+    						VALUES(  TMP.BATCH_ID     
+    								,TMP.JOB_ID
+    								,'f_points_cus_day_ld'
+    								,CAST('2020-12-23' AS DATE FORMAT 'YYYY-MM-DD')
+									,CURRENT_TIMESTAMP
+    								,'edw_points_20201225.txt'
+    								,  325538
+    								,'STG_F_POINTS_CUS_DAY_B'
+    								,325538
+    								,0
+    								,0
+    								,0
+    								,TMP.LEVEL)
+    							
+END:************************
+
+f_points_cus_day_ld 12/25/2020 04:13:15: Err1 table count: 0
+f_points_cus_day_ld 12/25/2020 04:13:15: STG_F_POINTS_CUS_DAY_B loaded successfully
+f_points_cus_day_ld 12/25/2020 04:13:15: STG_F_POINTS_CUS_DAY_B Stage load completed successfully
+f_points_cus_day_ld 12/25/2020 04:13:15: Setting bookmark value for the script in DWH_C_BATCH_LOG table
+Start:************************
+query_command : UPDATE EXPDW_ETE_DWH.DWH_C_BATCH_LOG
+                      SET BOOKMARK='AFTER_STG_LOAD'
+					  ,JOB_ID=1140
+                      WHERE BATCH_ID=1535
+                       AND JOB_NAME = 'f_points_cus_day_ld'
+					   AND START_TIMESTAMP='2020-12-25 04:13:10.660000'
+                     
+END:************************
+
+
+
+==============================================================================================================================================
+====================================================  RUNNING CODES FOR BOOKMARK = AFTER_STG_LOAD  ================================================
+==============================================================================================================================================
+
+
+f_points_cus_day_ld 12/25/2020 04:13:15: Load into Temp0 Table Started
+f_points_cus_day_ld 12/25/2020 04:13:15: Truncate Temp0 Table
+f_points_cus_day_ld 12/25/2020 04:13:15: Truncating table TMP0_F_POINTS_CUS_DAY_B
+Start:************************
+query_command : DELETE FROM EXPDW_ETE_TMP.TMP0_F_POINTS_CUS_DAY_B ALL
+END:************************
+
+f_points_cus_day_ld 12/25/2020 04:13:15: TMP0_F_POINTS_CUS_DAY_B truncated successfully
+f_points_cus_day_ld 12/25/2020 04:13:15: Loading TMP0_F_POINTS_CUS_DAY_B
+Start:************************
+query_command : 
+	INSERT INTO EXPDW_ETE_TMP.TMP0_F_POINTS_CUS_DAY_B (
+		CUS_KEY, DAY_KEY, NEXT_DAY_KEY
+		,LYLTY_PROG_YR_KEY, EARNED_POINTS, CUM_EARNED_POINTS, CUM_PROG_YR_EARNED_POINTS, CONSUMED_POINTS, CUM_CONSUMED_POINTS, EXPIRED_POINTS, CUM_EXPIRED_POINTS
+		,AVAILABLE_POINTS
+		,CUS_ID
+		,RUN_DT
+	)
+	SELECT CUS.CUS_KEY, 
+	SRC.DAY_KEY,
+	COALESCE(
+			MIN(SRC.DAY_KEY) OVER (
+				PARTITION BY CUS_KEY
+				ORDER BY SRC.DAY_KEY ROWS BETWEEN 1 FOLLOWING 
+					AND 1 FOLLOWING
+			), 
+			CAST('9999-12-31' AS DATE FORMAT 'YYYY-MM-DD')
+		) AS NEXT_DAY_KEY,
+	SRC.LYLTY_PROG_YR_KEY,
+	SRC.EARNED_POINTS,
+	SRC.CUM_EARNED_POINTS,
+	SRC.CUM_PROG_YR_EARNED_POINTS,
+	SRC.CONSUMED_POINTS,
+	SRC.CUM_CONSUMED_POINTS,
+	SRC.EXPIRED_POINTS,
+	SRC.CUM_EXPIRED_POINTS,
+	SRC.AVAILABLE_POINTS,
+	SRC.CUS_ID,
+	SRC.RUN_DT
+	FROM EXPDW_ETE_STG.STG_F_POINTS_CUS_DAY_B SRC
+	INNER JOIN EXPDW_ETE_DWH_V.V_DWH_D_CUS_LU CUS
+	ON SRC.CUS_ID=CUS.CUS_ID;
+	
+END:************************
+
+f_points_cus_day_ld 12/25/2020 04:13:28: TMP0_F_POINTS_CUS_DAY_B loaded successfully
+f_points_cus_day_ld 12/25/2020 04:13:28: set_activity_count
+f_points_cus_day_ld 12/25/2020 04:13:28: set_activity_count end
+Start:************************
+query_command : SELECT COUNT(*) FROM EXPDW_ETE_STG.STG_F_POINTS_CUS_DAY_B
+END:************************
+
+f_points_cus_day_ld 12/25/2020 04:13:29: Source     : STG_F_POINTS_CUS_DAY_B
+f_points_cus_day_ld 12/25/2020 04:13:29: Destination: TMP0_F_POINTS_CUS_DAY_B
+f_points_cus_day_ld 12/25/2020 04:13:29: SQL Statistics:
+f_points_cus_day_ld 12/25/2020 04:13:29: NO OF ROWS INSERTED: 262363
+f_points_cus_day_ld 12/25/2020 04:13:29: NO OF ROWS DELETED:  0
+f_points_cus_day_ld 12/25/2020 04:13:29: No OF ROWS UPDATED:  0
+Start:************************
+query_command : MERGE INTO EXPDW_ETE_DWH.DWH_C_AUDIT_LOG AS  A
+                   USING (
+    					 SELECT 1535 BATCH_ID 
+    							,1140 JOB_ID
+    							,2 LEVEL
+    					 ) AS TMP
+    					 ON A.BATCH_ID = TMP.BATCH_ID
+    					  AND A.JOB_ID = TMP.JOB_ID
+    					  AND A.LEVEL = TMP.LEVEL
+    					 WHEN MATCHED THEN UPDATE
+            					 SET NUMBERS_OF_ROW_INSERTED = NUMBERS_OF_ROW_INSERTED+262363
+    					 		    ,NUMBERS_OF_ROW_UPDATED  = NUMBERS_OF_ROW_UPDATED+0
+    					 		    ,NUMBERS_OF_ROW_DELETED  = NUMBERS_OF_ROW_DELETED+0
+    					 		    ,NUMBERS_OF_ROW_REJECTED = NUMBERS_OF_ROW_REJECTED+0
+									,AUDIT_TIMESTAMP = CURRENT_TIMESTAMP
+    					 WHEN NOT MATCHED THEN INSERT
+                   			   (	 BATCH_ID                
+    									,JOB_ID                  
+    									,JOB_NAME                
+    									,BUSINESS_DATE 
+                                        ,AUDIT_TIMESTAMP										
+    									,SOURCE        
+    									,SOURCE_COUNT            
+    									,TARGET         
+    									,NUMBERS_OF_ROW_INSERTED 
+    									,NUMBERS_OF_ROW_UPDATED  
+    									,NUMBERS_OF_ROW_DELETED  
+    									,NUMBERS_OF_ROW_REJECTED
+    									,LEVEL)
+    						VALUES(  TMP.BATCH_ID     
+    								,TMP.JOB_ID
+    								,'f_points_cus_day_ld'
+    								,CAST('2020-12-23' AS DATE FORMAT 'YYYY-MM-DD')
+									,CURRENT_TIMESTAMP
+    								,'STG_F_POINTS_CUS_DAY_B'
+    								,     325538
+    								,'TMP0_F_POINTS_CUS_DAY_B'
+    								,262363
+    								,0
+    								,0
+    								,0
+    								,TMP.LEVEL)
+    							
+END:************************
+
+f_points_cus_day_ld 12/25/2020 04:13:29: Setting bookmark value for the script in DWH_C_BATCH_LOG table
+Start:************************
+query_command : UPDATE EXPDW_ETE_DWH.DWH_C_BATCH_LOG
+                      SET BOOKMARK='AFTER_LOAD_FIRST_TEMP_TABLE'
+					  ,JOB_ID=1140
+                      WHERE BATCH_ID=1535
+                       AND JOB_NAME = 'f_points_cus_day_ld'
+					   AND START_TIMESTAMP='2020-12-25 04:13:10.660000'
+                     
+END:************************
+
+
+
+==============================================================================================================================================
+====================================================  RUNNING CODES FOR BOOKMARK = AFTER_LOAD_FIRST_TEMP_TABLE  ================================================
+==============================================================================================================================================
+
+
+f_points_cus_day_ld 12/25/2020 04:13:29: Collecting Statistics for TMP_F_POINTS_CUS_DAY_B
+Start:************************
+query_command : 
+	COLLECT STATS COLUMN(CUS_KEY,DAY_KEY)
+		,COLUMN(CUS_KEY)
+		,COLUMN(DAY_KEY)
+	ON EXPDW_ETE_TMP.TMP0_F_POINTS_CUS_DAY_B;
+	
+END:************************
+
+f_points_cus_day_ld 12/25/2020 04:13:29: TMP0_F_POINTS_CUS_DAY_B Statistics collected successfully
+f_points_cus_day_ld 12/25/2020 04:13:29: Setting bookmark value for the script in DWH_C_BATCH_LOG table
+Start:************************
+query_command : UPDATE EXPDW_ETE_DWH.DWH_C_BATCH_LOG
+                      SET BOOKMARK='AFTER_COLLECT_STATS_FIRST_TEMP_TABLE'
+					  ,JOB_ID=1140
+                      WHERE BATCH_ID=1535
+                       AND JOB_NAME = 'f_points_cus_day_ld'
+					   AND START_TIMESTAMP='2020-12-25 04:13:10.660000'
+                     
+END:************************
+
+
+
+==============================================================================================================================================
+====================================================  RUNNING CODES FOR BOOKMARK = AFTER_COLLECT_STATS_FIRST_TEMP_TABLE  ================================================
+==============================================================================================================================================
+
+
+f_points_cus_day_ld 12/25/2020 04:13:30: Load into Temp Table Started
+f_points_cus_day_ld 12/25/2020 04:13:30: Truncate Temp Table
+f_points_cus_day_ld 12/25/2020 04:13:30: Truncating table TMP_F_POINTS_CUS_DAY_B
+Start:************************
+query_command : DELETE FROM EXPDW_ETE_TMP.TMP_F_POINTS_CUS_DAY_B ALL
+END:************************
+
+f_points_cus_day_ld 12/25/2020 04:13:30: TMP_F_POINTS_CUS_DAY_B truncated successfully
+f_points_cus_day_ld 12/25/2020 04:13:30: Loading TMP_F_POINTS_CUS_DAY_B
+Start:************************
+query_command : 
+	INSERT INTO EXPDW_ETE_TMP.TMP_F_POINTS_CUS_DAY_B (
+		 CUS_KEY
+		,EFF_FROM_DT
+		,EFF_TO_DT
+		,LYLTY_PROG_YR_KEY, EARNED_POINTS, CUM_EARNED_POINTS, CUM_PROG_YR_EARNED_POINTS, CONSUMED_POINTS, CUM_CONSUMED_POINTS, EXPIRED_POINTS, CUM_EXPIRED_POINTS		
+		,AVAILABLE_POINTS
+	)
+	SELECT 
+		 CUS_KEY
+		,BEGIN(A.PD) EFF_FROM_DT
+		,CASE WHEN END(A.PD)=DATE '9999-12-31' THEN END(A.PD)
+			  ELSE END(A.PD)-1 
+		 END EFF_TO_DT
+		,LYLTY_PROG_YR_KEY, EARNED_POINTS, CUM_EARNED_POINTS, CUM_PROG_YR_EARNED_POINTS, CONSUMED_POINTS, CUM_CONSUMED_POINTS, EXPIRED_POINTS, CUM_EXPIRED_POINTS
+		,AVAILABLE_POINTS
+	FROM (
+		SELECT NORMALIZE 
+		CUS_KEY, 
+		LYLTY_PROG_YR_KEY,
+		EARNED_POINTS,
+		CUM_EARNED_POINTS,
+		CUM_PROG_YR_EARNED_POINTS,
+		CONSUMED_POINTS,
+		CUM_CONSUMED_POINTS,
+		EXPIRED_POINTS,
+		CUM_EXPIRED_POINTS,
+		AVAILABLE_POINTS,  
+		PERIOD(DAY_KEY, NEXT_DAY_KEY) PD
+		FROM EXPDW_ETE_TMP.TMP0_F_POINTS_CUS_DAY_B
+		) A;
+	
+END:************************
+
+f_points_cus_day_ld 12/25/2020 04:13:30: TMP_F_POINTS_CUS_DAY_B loaded successfully
+f_points_cus_day_ld 12/25/2020 04:13:30: set_activity_count
+f_points_cus_day_ld 12/25/2020 04:13:30: set_activity_count end
+Start:************************
+query_command : SELECT COUNT(*) FROM EXPDW_ETE_STG.STG_F_POINTS_CUS_DAY_B
+END:************************
+
+f_points_cus_day_ld 12/25/2020 04:13:30: Source     : STG_F_POINTS_CUS_DAY_B
+f_points_cus_day_ld 12/25/2020 04:13:30: Destination: TMP_F_POINTS_CUS_DAY_B
+f_points_cus_day_ld 12/25/2020 04:13:30: SQL Statistics:
+f_points_cus_day_ld 12/25/2020 04:13:30: NO OF ROWS INSERTED: 262363
+f_points_cus_day_ld 12/25/2020 04:13:30: NO OF ROWS DELETED:  0
+f_points_cus_day_ld 12/25/2020 04:13:30: No OF ROWS UPDATED:  0
+Start:************************
+query_command : MERGE INTO EXPDW_ETE_DWH.DWH_C_AUDIT_LOG AS  A
+                   USING (
+    					 SELECT 1535 BATCH_ID 
+    							,1140 JOB_ID
+    							,2 LEVEL
+    					 ) AS TMP
+    					 ON A.BATCH_ID = TMP.BATCH_ID
+    					  AND A.JOB_ID = TMP.JOB_ID
+    					  AND A.LEVEL = TMP.LEVEL
+    					 WHEN MATCHED THEN UPDATE
+            					 SET NUMBERS_OF_ROW_INSERTED = NUMBERS_OF_ROW_INSERTED+262363
+    					 		    ,NUMBERS_OF_ROW_UPDATED  = NUMBERS_OF_ROW_UPDATED+0
+    					 		    ,NUMBERS_OF_ROW_DELETED  = NUMBERS_OF_ROW_DELETED+0
+    					 		    ,NUMBERS_OF_ROW_REJECTED = NUMBERS_OF_ROW_REJECTED+0
+									,AUDIT_TIMESTAMP = CURRENT_TIMESTAMP
+    					 WHEN NOT MATCHED THEN INSERT
+                   			   (	 BATCH_ID                
+    									,JOB_ID                  
+    									,JOB_NAME                
+    									,BUSINESS_DATE 
+                                        ,AUDIT_TIMESTAMP										
+    									,SOURCE        
+    									,SOURCE_COUNT            
+    									,TARGET         
+    									,NUMBERS_OF_ROW_INSERTED 
+    									,NUMBERS_OF_ROW_UPDATED  
+    									,NUMBERS_OF_ROW_DELETED  
+    									,NUMBERS_OF_ROW_REJECTED
+    									,LEVEL)
+    						VALUES(  TMP.BATCH_ID     
+    								,TMP.JOB_ID
+    								,'f_points_cus_day_ld'
+    								,CAST('2020-12-23' AS DATE FORMAT 'YYYY-MM-DD')
+									,CURRENT_TIMESTAMP
+    								,'STG_F_POINTS_CUS_DAY_B'
+    								,     325538
+    								,'TMP_F_POINTS_CUS_DAY_B'
+    								,262363
+    								,0
+    								,0
+    								,0
+    								,TMP.LEVEL)
+    							
+END:************************
+
+f_points_cus_day_ld 12/25/2020 04:13:31: Setting bookmark value for the script in DWH_C_BATCH_LOG table
+Start:************************
+query_command : UPDATE EXPDW_ETE_DWH.DWH_C_BATCH_LOG
+                      SET BOOKMARK='AFTER_LOAD_SECOND_TEMP_TABLE'
+					  ,JOB_ID=1140
+                      WHERE BATCH_ID=1535
+                       AND JOB_NAME = 'f_points_cus_day_ld'
+					   AND START_TIMESTAMP='2020-12-25 04:13:10.660000'
+                     
+END:************************
+
+
+
+==============================================================================================================================================
+====================================================  RUNNING CODES FOR BOOKMARK = AFTER_LOAD_SECOND_TEMP_TABLE  ================================================
+==============================================================================================================================================
+
+
+f_points_cus_day_ld 12/25/2020 04:13:31: Collecting Statistics for TMP_F_POINTS_CUS_DAY_B
+Start:************************
+query_command : 
+	COLLECT STATS COLUMN(CUS_KEY,EFF_FROM_DT,EFF_TO_DT)
+		,COLUMN(CUS_KEY)
+		,COLUMN(EFF_FROM_DT)
+		,COLUMN(EFF_TO_DT)
+	ON EXPDW_ETE_TMP.TMP_F_POINTS_CUS_DAY_B;
+	
+END:************************
+
+f_points_cus_day_ld 12/25/2020 04:13:31: TMP_F_POINTS_CUS_DAY_B Statistics collected successfully
+f_points_cus_day_ld 12/25/2020 04:13:31: Setting bookmark value for the script in DWH_C_BATCH_LOG table
+Start:************************
+query_command : UPDATE EXPDW_ETE_DWH.DWH_C_BATCH_LOG
+                      SET BOOKMARK='AFTER_COLLECT_STATS_SECOND_TEMP_TABLE'
+					  ,JOB_ID=1140
+                      WHERE BATCH_ID=1535
+                       AND JOB_NAME = 'f_points_cus_day_ld'
+					   AND START_TIMESTAMP='2020-12-25 04:13:10.660000'
+                     
+END:************************
+
+
+
+==============================================================================================================================================
+====================================================  RUNNING CODES FOR BOOKMARK = AFTER_COLLECT_STATS_SECOND_TEMP_TABLE  ================================================
+==============================================================================================================================================
+
+
+f_points_cus_day_ld 12/25/2020 04:13:32: Loading DWH_F_POINTS_CUS_DAY_B
+f_points_cus_day_ld 12/25/2020 04:13:32: Deleting record from DWH_F_POINTS_CUS_DAY_B table whose effective-from-date is >= min of TMP_F_POINTS_CUS_DAY_B table effective-from-date
+Start:************************
+query_command : 
+	DELETE FROM EXPDW_ETE_DWH.DWH_F_POINTS_CUS_DAY_B A
+	WHERE EXISTS (
+		SELECT 1
+		FROM EXPDW_ETE_TMP.TMP_F_POINTS_CUS_DAY_B B
+		WHERE A.CUS_KEY=B.CUS_KEY GROUP BY CUS_KEY
+			HAVING A.EFF_FROM_DT>=min(B.EFF_FROM_DT)
+			);
+	
+END:************************
+
+f_points_cus_day_ld 12/25/2020 04:13:36: EXPDW_ETE_DWH deleted successfully
+f_points_cus_day_ld 12/25/2020 04:13:36: set_activity_count
+f_points_cus_day_ld 12/25/2020 04:13:36: set_activity_count end
+Start:************************
+query_command : SELECT COUNT(*) FROM EXPDW_ETE_TMP.TMP_F_POINTS_CUS_DAY_B
+END:************************
+
+f_points_cus_day_ld 12/25/2020 04:13:37: Source     : TMP_F_POINTS_CUS_DAY_B
+f_points_cus_day_ld 12/25/2020 04:13:37: Destination: DWH_F_POINTS_CUS_DAY_B
+f_points_cus_day_ld 12/25/2020 04:13:37: SQL Statistics:
+f_points_cus_day_ld 12/25/2020 04:13:37: NO OF ROWS INSERTED: 0
+f_points_cus_day_ld 12/25/2020 04:13:37: NO OF ROWS DELETED:  100390
+f_points_cus_day_ld 12/25/2020 04:13:37: No OF ROWS UPDATED:  0
+Start:************************
+query_command : MERGE INTO EXPDW_ETE_DWH.DWH_C_AUDIT_LOG AS  A
+                   USING (
+    					 SELECT 1535 BATCH_ID 
+    							,1140 JOB_ID
+    							,3 LEVEL
+    					 ) AS TMP
+    					 ON A.BATCH_ID = TMP.BATCH_ID
+    					  AND A.JOB_ID = TMP.JOB_ID
+    					  AND A.LEVEL = TMP.LEVEL
+    					 WHEN MATCHED THEN UPDATE
+            					 SET NUMBERS_OF_ROW_INSERTED = NUMBERS_OF_ROW_INSERTED+0
+    					 		    ,NUMBERS_OF_ROW_UPDATED  = NUMBERS_OF_ROW_UPDATED+0
+    					 		    ,NUMBERS_OF_ROW_DELETED  = NUMBERS_OF_ROW_DELETED+100390
+    					 		    ,NUMBERS_OF_ROW_REJECTED = NUMBERS_OF_ROW_REJECTED+0
+									,AUDIT_TIMESTAMP = CURRENT_TIMESTAMP
+    					 WHEN NOT MATCHED THEN INSERT
+                   			   (	 BATCH_ID                
+    									,JOB_ID                  
+    									,JOB_NAME                
+    									,BUSINESS_DATE 
+                                        ,AUDIT_TIMESTAMP										
+    									,SOURCE        
+    									,SOURCE_COUNT            
+    									,TARGET         
+    									,NUMBERS_OF_ROW_INSERTED 
+    									,NUMBERS_OF_ROW_UPDATED  
+    									,NUMBERS_OF_ROW_DELETED  
+    									,NUMBERS_OF_ROW_REJECTED
+    									,LEVEL)
+    						VALUES(  TMP.BATCH_ID     
+    								,TMP.JOB_ID
+    								,'f_points_cus_day_ld'
+    								,CAST('2020-12-23' AS DATE FORMAT 'YYYY-MM-DD')
+									,CURRENT_TIMESTAMP
+    								,'TMP_F_POINTS_CUS_DAY_B'
+    								,     262363
+    								,'DWH_F_POINTS_CUS_DAY_B'
+    								,0
+    								,0
+    								,100390
+    								,0
+    								,TMP.LEVEL)
+    							
+END:************************
+
+f_points_cus_day_ld 12/25/2020 04:13:37: Setting bookmark value for the script in DWH_C_BATCH_LOG table
+Start:************************
+query_command : UPDATE EXPDW_ETE_DWH.DWH_C_BATCH_LOG
+                      SET BOOKMARK='AFTER_DELETE_FROM_TARGET'
+					  ,JOB_ID=1140
+                      WHERE BATCH_ID=1535
+                       AND JOB_NAME = 'f_points_cus_day_ld'
+					   AND START_TIMESTAMP='2020-12-25 04:13:10.660000'
+                     
+END:************************
+
+
+
+==============================================================================================================================================
+====================================================  RUNNING CODES FOR BOOKMARK = AFTER_DELETE_FROM_TARGET  ================================================
+==============================================================================================================================================
+
+
+f_points_cus_day_ld 12/25/2020 04:13:37: Collecting Statistics for DWH_F_POINTS_CUS_DAY_B
+Start:************************
+query_command : 
+	COLLECT STATS COLUMN(CUS_KEY,EFF_FROM_DT)
+		, COLUMN(CUS_KEY)
+		, COLUMN(EFF_FROM_DT)
+		, COLUMN(EFF_TO_DT)
+	ON EXPDW_ETE_DWH.DWH_F_POINTS_CUS_DAY_B;
+	
+END:************************
+
+f_points_cus_day_ld 12/25/2020 04:13:46: DWH_F_POINTS_CUS_DAY_B Statistics collected successfully
+f_points_cus_day_ld 12/25/2020 04:13:46: Setting bookmark value for the script in DWH_C_BATCH_LOG table
+Start:************************
+query_command : UPDATE EXPDW_ETE_DWH.DWH_C_BATCH_LOG
+                      SET BOOKMARK='AFTER_COLLECT_STATS_TARGET_TABLE'
+					  ,JOB_ID=1140
+                      WHERE BATCH_ID=1535
+                       AND JOB_NAME = 'f_points_cus_day_ld'
+					   AND START_TIMESTAMP='2020-12-25 04:13:10.660000'
+                     
+END:************************
+
+
+
+==============================================================================================================================================
+====================================================  RUNNING CODES FOR BOOKMARK = AFTER_COLLECT_STATS_TARGET_TABLE  ================================================
+==============================================================================================================================================
+
+
+f_points_cus_day_ld 12/25/2020 04:13:46: Inserting DWH_F_POINTS_CUS_DAY_B
+Start:************************
+query_command : 
+	INSERT INTO EXPDW_ETE_DWH.DWH_F_POINTS_CUS_DAY_B (
+		 CUS_KEY
+		,EFF_FROM_DT
+		,EFF_TO_DT
+		,LYLTY_PROG_YR_KEY
+		,EARNED_POINTS
+		,CUM_EARNED_POINTS
+		,CUM_LYLTY_PROG_YR_EARNED_POINTS
+		,CONSUMED_POINTS
+		,CUM_CONSUMED_POINTS
+		,EXPIRED_POINTS
+		,CUM_EXPIRED_POINTS
+		,AVAILABLE_POINTS
+		,RCD_INS_TS
+		,RCD_UPD_TS
+	)
+	SELECT 
+		 CUS_KEY
+		,EFF_FROM_DT
+		,EFF_TO_DT
+		,LYLTY_PROG_YR_KEY
+		,EARNED_POINTS
+		,CUM_EARNED_POINTS
+		,CUM_PROG_YR_EARNED_POINTS
+		,CONSUMED_POINTS
+		,CUM_CONSUMED_POINTS
+		,EXPIRED_POINTS
+		,CUM_EXPIRED_POINTS
+		,AVAILABLE_POINTS
+		,CAST('20201225041308' AS TIMESTAMP FORMAT 'YYYYMMDDHHMISS') RCD_INS_TS
+		,CAST('20201225041308' AS TIMESTAMP FORMAT 'YYYYMMDDHHMISS') RCD_UPD_TS
+	FROM EXPDW_ETE_TMP.TMP_F_POINTS_CUS_DAY_B SRC
+	WHERE NOT EXISTS (
+		SELECT 1
+		FROM EXPDW_ETE_DWH_V.V_DWH_F_POINTS_CUS_DAY_B TGT
+		WHERE SRC.CUS_KEY=TGT.CUS_KEY
+			AND SRC.EFF_FROM_DT=TGT.EFF_FROM_DT
+	);
+	
+END:************************
+
+f_points_cus_day_ld 12/25/2020 04:13:51: EXPDW_ETE_DWH loaded successfully
+f_points_cus_day_ld 12/25/2020 04:13:51: set_activity_count
+f_points_cus_day_ld 12/25/2020 04:13:51: set_activity_count end
+Start:************************
+query_command : SELECT COUNT(*) FROM EXPDW_ETE_TMP.TMP_F_POINTS_CUS_DAY_B
+END:************************
+
+f_points_cus_day_ld 12/25/2020 04:13:52: Source     : TMP_F_POINTS_CUS_DAY_B
+f_points_cus_day_ld 12/25/2020 04:13:52: Destination: DWH_F_POINTS_CUS_DAY_B
+f_points_cus_day_ld 12/25/2020 04:13:52: SQL Statistics:
+f_points_cus_day_ld 12/25/2020 04:13:52: NO OF ROWS INSERTED: 262363
+f_points_cus_day_ld 12/25/2020 04:13:52: NO OF ROWS DELETED:  0
+f_points_cus_day_ld 12/25/2020 04:13:52: No OF ROWS UPDATED:  0
+Start:************************
+query_command : MERGE INTO EXPDW_ETE_DWH.DWH_C_AUDIT_LOG AS  A
+                   USING (
+    					 SELECT 1535 BATCH_ID 
+    							,1140 JOB_ID
+    							,3 LEVEL
+    					 ) AS TMP
+    					 ON A.BATCH_ID = TMP.BATCH_ID
+    					  AND A.JOB_ID = TMP.JOB_ID
+    					  AND A.LEVEL = TMP.LEVEL
+    					 WHEN MATCHED THEN UPDATE
+            					 SET NUMBERS_OF_ROW_INSERTED = NUMBERS_OF_ROW_INSERTED+262363
+    					 		    ,NUMBERS_OF_ROW_UPDATED  = NUMBERS_OF_ROW_UPDATED+0
+    					 		    ,NUMBERS_OF_ROW_DELETED  = NUMBERS_OF_ROW_DELETED+0
+    					 		    ,NUMBERS_OF_ROW_REJECTED = NUMBERS_OF_ROW_REJECTED+0
+									,AUDIT_TIMESTAMP = CURRENT_TIMESTAMP
+    					 WHEN NOT MATCHED THEN INSERT
+                   			   (	 BATCH_ID                
+    									,JOB_ID                  
+    									,JOB_NAME                
+    									,BUSINESS_DATE 
+                                        ,AUDIT_TIMESTAMP										
+    									,SOURCE        
+    									,SOURCE_COUNT            
+    									,TARGET         
+    									,NUMBERS_OF_ROW_INSERTED 
+    									,NUMBERS_OF_ROW_UPDATED  
+    									,NUMBERS_OF_ROW_DELETED  
+    									,NUMBERS_OF_ROW_REJECTED
+    									,LEVEL)
+    						VALUES(  TMP.BATCH_ID     
+    								,TMP.JOB_ID
+    								,'f_points_cus_day_ld'
+    								,CAST('2020-12-23' AS DATE FORMAT 'YYYY-MM-DD')
+									,CURRENT_TIMESTAMP
+    								,'TMP_F_POINTS_CUS_DAY_B'
+    								,     262363
+    								,'DWH_F_POINTS_CUS_DAY_B'
+    								,262363
+    								,0
+    								,0
+    								,0
+    								,TMP.LEVEL)
+    							
+END:************************
+
+f_points_cus_day_ld 12/25/2020 04:13:52: Setting bookmark value for the script in DWH_C_BATCH_LOG table
+Start:************************
+query_command : UPDATE EXPDW_ETE_DWH.DWH_C_BATCH_LOG
+                      SET BOOKMARK='AFTER_INSERT_INTO_TARGET'
+					  ,JOB_ID=1140
+                      WHERE BATCH_ID=1535
+                       AND JOB_NAME = 'f_points_cus_day_ld'
+					   AND START_TIMESTAMP='2020-12-25 04:13:10.660000'
+                     
+END:************************
+
+
+
+==============================================================================================================================================
+====================================================  RUNNING CODES FOR BOOKMARK = AFTER_INSERT_INTO_TARGET  ================================================
+==============================================================================================================================================
+
+
+f_points_cus_day_ld 12/25/2020 04:13:52: DWH_F_POINTS_CUS_DAY_B Load Complete
+f_points_cus_day_ld 12/25/2020 04:13:52: Collecting Statistics for DWH_F_POINTS_CUS_DAY_B
+Start:************************
+query_command : 
+	COLLECT STATS COLUMN(CUS_KEY,EFF_FROM_DT)
+		,COLUMN(CUS_KEY)
+		,COLUMN(EFF_FROM_DT)
+		,COLUMN(EFF_TO_DT)
+	ON EXPDW_ETE_DWH.DWH_F_POINTS_CUS_DAY_B;
+	
+END:************************
+
+f_points_cus_day_ld 12/25/2020 04:14:01: DWH_F_POINTS_CUS_DAY_B Statistics collected successfully
+f_points_cus_day_ld 12/25/2020 04:14:01: Setting bookmark value for the script in DWH_C_BATCH_LOG table
+Start:************************
+query_command : UPDATE EXPDW_ETE_DWH.DWH_C_BATCH_LOG
+                      SET BOOKMARK='AFTER COLLECT STATS FOR TARGET TABLE'
+					  ,JOB_ID=1140
+                      WHERE BATCH_ID=1535
+                       AND JOB_NAME = 'f_points_cus_day_ld'
+					   AND START_TIMESTAMP='2020-12-25 04:13:10.660000'
+                     
+END:************************
+
+
+
+==============================================================================================================================================
+====================================================  RUNNING CODES FOR BOOKMARK = AFTER COLLECT STATS FOR TARGET TABLE  ================================================
+==============================================================================================================================================
+
+
+f_points_cus_day_ld 12/25/2020 04:14:01: Adding checksum to data file for archiving
+/batch/ete/data/customer/points/edw_points_20201225.txt
+f_points_cus_day_ld 12/25/2020 04:14:01: Archiving data file from /batch/ete/data/customer/points/edw_points_20201225.txt to /batch/ete/data/customer/data_archive/
+f_points_cus_day_ld 12/25/2020 04:14:01: Setting bookmark value for the script in DWH_C_BATCH_LOG table
+Start:************************
+query_command : UPDATE EXPDW_ETE_DWH.DWH_C_BATCH_LOG
+                      SET BOOKMARK='DONE'
+					  ,JOB_ID=1140
+                      WHERE BATCH_ID=1535
+                       AND JOB_NAME = 'f_points_cus_day_ld'
+					   AND START_TIMESTAMP='2020-12-25 04:13:10.660000'
+                     
+END:************************
+
+
+
+==============================================================================================================================================
+====================================================  RUNNING CODES FOR BOOKMARK = DONE  ================================================
+==============================================================================================================================================
+
+
+f_points_cus_day_ld 12/25/2020 04:14:01: Script Successful
+Start:************************
+query_command : UPDATE EXPDW_ETE_DWH.DWH_C_BATCH_LOG 
+                     SET      
+                            END_TIMESTAMP = CURRENT_TIMESTAMP
+                            ,STATUS='COMPLETE'
+							,JOB_ID='1140'
+							,ERROR_DETAIL='COMPLETE'
+							,BOOKMARK='COMPLETE'
+                     WHERE BATCH_ID='1535'
+							AND JOB_NAME='f_points_cus_day_ld'
+							AND START_TIMESTAMP='2020-12-25 04:13:10.660000'
+END:************************
+

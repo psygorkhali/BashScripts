@@ -1,0 +1,458 @@
+#!/bin/ksh
+
+######################################################################
+# Script : f_points_cus_day_ld.ksh
+# Description : This script loads the Points Fact Data table 
+#               DWH_F_POINTS_CUS_DAY_B using TEMP TABLE 
+#				STG_F_POINTS_CUS_DAY_B.
+# Modifications
+# 12/7/2020  : Logic  : Initial Script
+######################################################################
+export SCRIPT_NAME=$(basename ${0%%.ksh})
+export DIM_CLOSABLE=0
+. ${ETLHOME}/etc/ENV.cfg
+. ${LIB_DIR}/run_lib.ksh
+
+##################################################
+SOURCE_TABLE="STG_F_POINTS_CUS_DAY_B"
+TEMP0_TABLE="TMP0_F_POINTS_CUS_DAY_B"
+TEMP_TABLE="TMP_F_POINTS_CUS_DAY_BU"
+TARGET_TABLE="DWH_F_POINTS_CUS_DAY_B"
+
+DIM_IDNT='RW_ID'
+DIM_KEY=''
+
+TEMP_TABLE_COLUMN='
+CUS_KEY 
+DAY_KEY
+NEXT_DAY_KEY
+LYLTY_PROG_YR_KEY
+EARNED_POINTS
+CUM_EARNED_POINTS
+CUM_LYLTY_PROG_YR_EARNED_POINTS
+CONSUMED_POINTS
+CUM_CONSUMED_POINTS
+EXPIRED_POINTS
+CUM_EXPIRED_POINTS
+AVAILABLE_POINTS
+RUN_DT'
+
+
+####### SET VARIABLES ######################################
+set_variables
+set_dimension_variable
+print_msg "${SCRIPT_NAME} Started"
+start_script
+
+ARCHIVE_DIR="${DATA_DIR}/customer/data_archive/"
+DATA_DIR="${DATA_DIR}/customer/points/"
+FILE_LIST=$(ls -1 ${DATA_DIR})
+FILE_LIST=(${FILE_LIST[@]})
+FILE_COUNT=${#FILE_LIST[@]}
+
+if [[ ${FILE_COUNT} != 1  ]]
+then
+	print_msg "Unexpected number of data files encountered: ${FILE_COUNT}"
+	print_msg "Expected 1 data file for processing at a time"
+	chk_err -r 1 -m "Expected 1 data file for processing at a time"
+fi
+
+DATA_FILE=${DATA_DIR}${FILE_LIST[0]}
+
+####### LOAD INTO STAGING TABLE ##############
+if [[ ${BOOKMARK} = "NONE" ]]
+then
+
+    truncate_staging_table	
+    load_data
+	print_msg "${SOURCE_TABLE} Stage load completed successfully"	
+	set_bookmark "AFTER_STG_LOAD"
+	
+fi
+
+####### LOAD INTO TEMPORARY0 TABLE ##########################
+if [[ ${BOOKMARK} = "AFTER_STG_LOAD" ]]
+then
+	print_msg "Load into Temp0 Table Started"
+	print_msg "Truncate Temp0 Table"
+	
+	truncate_table -d "${TEMP_DB}" -t "${TEMP0_TABLE}"
+
+	print_msg "${TEMP0_TABLE} truncated successfully"
+	print_msg "Loading ${TEMP0_TABLE}"
+
+	INSERT_SQL="
+	INSERT INTO ${TEMP_DB}.${TEMP0_TABLE} (
+		${DIM_IDNT}		
+		,${TEMP_TABLE_COLUMN_LIST}
+	)
+	SELECT
+	SRC.CUS_KEY, 
+	SRC.DAY_KEY,
+	COALESCE(
+			MIN(SRC.DAY_KEY) OVER (
+				PARTITION BY SRC.CUS_KEY
+				ORDER BY SRC.DAY_KEY ROWS BETWEEN 1 FOLLOWING 
+					AND 1 FOLLOWING
+			), 
+			CAST('9999-12-31' AS DATE FORMAT 'YYYY-MM-DD')
+		) AS NEXT_DAY_KEY,
+	SRC.LYLTY_PROG_YR_KEY,
+	SRC.EARNED_POINTS,
+	SRC.CUM_EARNED_POINTS,
+	SRC.CUM_LYLTY_PROG_YR_EARNED_POINTS,
+	SRC.CONSUMED_POINTS,
+	SRC.CUM_CONSUMED_POINTS,
+	SRC.EXPIRED_POINTS,
+	SRC.CUM_EXPIRED_POINTS,
+	SRC.AVAILABLE_POINTS,
+	SRC.RUN_DT     
+	FROM ${SRC_DB}.${SOURCE_TABLE} SRC;
+	"
+
+	run_query -d "$TEMP_DB" -q "$INSERT_SQL" -m "Unable to Insert Records for Points into temp0 table" 
+	print_msg "${TEMP0_TABLE} loaded successfully"
+	set_activity_count insert
+	audit_log 2
+	set_bookmark "AFTER_LOAD_TEMP0_TABLE"
+fi
+
+
+
+####### LOAD INTO TEMPORARY TABLE ##########################
+if [[ ${BOOKMARK} = "AFTER_LOAD_TEMP0_TABLE" ]]
+then
+	print_msg "Load into Temp Table Started"
+	print_msg "Truncate Temp Table"
+	
+	truncate_table -d "${TEMP_DB}" -t "${TEMP_TABLE}"
+
+	print_msg "${TEMP_TABLE} truncated successfully"
+	print_msg "Loading ${TEMP_TABLE}"
+
+	INSERT_SQL="
+	INSERT INTO ${TEMP_DB}.${TEMP_TABLE} (
+		${DIM_IDNT}		
+		,${TEMP_TABLE_COLUMN_LIST}
+	)
+	SELECT
+	SRC.CUS_KEY, 
+	SRC.DAY_KEY,
+	SRC.NEX_DAY_KEY,
+	SRC.LYLTY_PROG_YR_KEY,
+	SRC.EARNED_POINTS,
+	SRC.CUM_EARNED_POINTS,
+	SRC.CUM_LYLTY_PROG_YR_EARNED_POINTS,
+	SRC.CONSUMED_POINTS,
+	SRC.CUM_CONSUMED_POINTS,
+	SRC.EXPIRED_POINTS,
+	SRC.CUM_EXPIRED_POINTS,
+	SRC.AVAILABLE_POINTS,
+	SRC.RUN_DT     
+	FROM ${TEMP_DB}.${TEMP0_TABLE} SRC;
+	"
+
+	run_query -d "$TEMP_DB" -q "$INSERT_SQL" -m "Unable to Insert Records for Points into temp table" 
+	print_msg "${TEMP_TABLE} loaded successfully"
+	set_activity_count insert
+	audit_log 2
+	set_bookmark "AFTER_LOAD_TEMP_TABLE"
+fi
+
+
+############### LOAD INTO TARGET TABLE ########################
+if [[ ${BOOKMARK} = "AFTER_LOAD_TEMP_TABLE" ]]
+then
+	print_msg "Loading ${TARGET_TABLE}"
+	update_using_temp_cdh
+	set_bookmark "AFTER_UPDATE_FROM_TEMP"
+fi
+
+if [[ ${BOOKMARK} = "AFTER_UPDATE_FROM_TEMP" ]]
+then
+	insert_nokeydimension_from_temp
+	set_bookmark "AFTER_INSERT_INTO_TEMP"
+	print_msg "${TARGET_TABLE} Load Complete"
+fi
+
+################ COLLECT STATS FOR TARGET TABLE ##################
+if [[ ${BOOKMARK} = "AFTER_INSERT_INTO_TEMP" ]]
+then
+	print_msg "Collecting Statistics for ${TARGET_TABLE}"
+	
+	STATS_SQL="
+	COLLECT STATS COLUMN(RWD_ID)
+	ON ${TARGET_DB}.${TARGET_TABLE};
+	"
+	
+	run_query -d "${TARGET_DB}" -q "${STATS_SQL}" -m "Unable to collect statistics for Target Table"
+	print_msg "${TARGET_TABLE} Statistics collected successfully"
+	set_bookmark "AFTER_COLLECT_STATS_TARGET_TABLE"
+fi
+
+SOURCE_TABLE="DWH_F_RWD_HIST_B"
+TARGET_TABLE="DWH_F_RWD_CUS_DAY_B"
+TEMP_TABLE="TMP_F_RWD_CUS_DAY_B"
+
+FACT_KEYS='RWD_ID
+DAY_KEY'
+
+FACT_IDNT=''
+
+OTHER_FIELDS='END_DAY_KEY
+CUS_KEY
+ISSUE_FLG
+REDEEM_FLG
+EXPR_FLG
+CERT_NUM
+RWD_DEF_KEY
+RWD_ISSUE_DT
+RWD_EXPR_DT
+API_REDMPTN_DT'
+
+FACT_FIELDS='F_BAL'
+
+####### SET VARIABLES ######################################
+set_fact_variable
+
+####### LOAD INTO TEMPORARY TABLE ##########################
+if [[ ${BOOKMARK} = "AFTER_COLLECT_STATS_TARGET_TABLE" ]]
+then
+	print_msg "Load into Temp Table Started"
+	print_msg "Truncate Temp Table"
+	
+	truncate_table -d "${TEMP_DB}" -t "${TEMP_TABLE}"
+
+	print_msg "${TEMP_TABLE} truncated successfully"
+	print_msg "Loading ${TEMP_TABLE}"
+
+	INSERT_SQL="
+	INSERT INTO ${TEMP_DB}.${TEMP_TABLE} (
+		${FACT_KEYS_LIST}		
+		,${OTHER_FIELDS_LIST}
+		,${FACT_FIELDS_LIST}
+	)
+	SELECT SRC.RWD_ID
+		,SRC.RWD_ISSUE_DT DAY_KEY
+		,SRC.RWD_ISSUE_DT END_DAY_KEY
+		,SRC.CUS_KEY
+		,1 ISSUE_FLG
+		,CASE WHEN RWD_ISSUE_DT=API_REDMPTN_DT THEN 1 ELSE 0 END REDEEM_FLG
+		,CASE WHEN RWD_ISSUE_DT=RWD_EXPR_DT THEN 1 ELSE 0 END EXPR_FLG		
+		,SRC.CERT_NUM
+		,SRC.RWD_DEF_KEY
+		,SRC.RWD_ISSUE_DT
+		,SRC.RWD_EXPR_DT
+		,API_REDMPTN_DT
+		,SRC.F_BAL
+	FROM (
+		SELECT * 
+		FROM ${VIEW_DB}.V_DWH_F_RWD_HIST_B
+		WHERE RCD_UPD_TS=(
+			SELECT MAX(RCD_UPD_TS) 
+			FROM ${VIEW_DB}.V_DWH_F_RWD_HIST_B
+		)
+	) SRC	
+	UNION ALL
+	SELECT SRC.RWD_ID
+		,SRC.API_REDMPTN_DT DAY_KEY
+		,SRC.API_REDMPTN_DT END_DAY_KEY
+		,SRC.CUS_KEY
+		,0 ISSUE_FLG
+		,1 REDEEM_FLG
+		,CASE WHEN API_REDMPTN_DT=RWD_EXPR_DT THEN 1 ELSE 0 END EXPR_FLG		
+		,SRC.CERT_NUM
+		,SRC.RWD_DEF_KEY
+		,SRC.RWD_ISSUE_DT
+		,SRC.RWD_EXPR_DT
+		,API_REDMPTN_DT
+		,SRC.F_BAL
+	FROM (
+		SELECT * 
+		FROM ${VIEW_DB}.V_DWH_F_RWD_HIST_B
+		WHERE RCD_UPD_TS=(
+			SELECT MAX(RCD_UPD_TS) 
+			FROM ${VIEW_DB}.V_DWH_F_RWD_HIST_B
+		)
+			AND API_REDMPTN_DT IS NOT NULL
+			AND API_REDMPTN_DT>RWD_ISSUE_DT
+	) SRC
+	UNION ALL
+	SELECT SRC.RWD_ID
+		,SRC.RWD_ISSUE_DT+1 DAY_KEY
+		,SRC.API_REDMPTN_DT-1 END_DAY_KEY
+		,SRC.CUS_KEY
+		,0 ISSUE_FLG
+		,0 REDEEM_FLG
+		,0 EXPR_FLG		
+		,SRC.CERT_NUM
+		,SRC.RWD_DEF_KEY
+		,SRC.RWD_ISSUE_DT
+		,SRC.RWD_EXPR_DT
+		,SRC.API_REDMPTN_DT
+		,SRC.F_BAL
+	FROM (
+		SELECT * 
+		FROM ${VIEW_DB}.V_DWH_F_RWD_HIST_B
+		WHERE RCD_UPD_TS=(
+			SELECT MAX(RCD_UPD_TS) 
+			FROM ${VIEW_DB}.V_DWH_F_RWD_HIST_B
+		)
+			AND API_REDMPTN_DT IS NOT NULL
+			AND API_REDMPTN_DT>RWD_ISSUE_DT+1
+			AND RWD_EXPR_DT>RWD_ISSUE_DT+1
+	) SRC
+	UNION ALL
+	SELECT SRC.RWD_ID
+		,SRC.RWD_ISSUE_DT+1 DAY_KEY
+		,SRC.RWD_EXPR_DT-1 END_DAY_KEY
+		,SRC.CUS_KEY
+		,0 ISSUE_FLG
+		,0 REDEEM_FLG
+		,0 EXPR_FLG		
+		,SRC.CERT_NUM
+		,SRC.RWD_DEF_KEY
+		,SRC.RWD_ISSUE_DT
+		,SRC.RWD_EXPR_DT
+		,SRC.API_REDMPTN_DT
+		,SRC.F_BAL
+	FROM (
+		SELECT * 
+		FROM ${VIEW_DB}.V_DWH_F_RWD_HIST_B
+		WHERE RCD_UPD_TS=(
+			SELECT MAX(RCD_UPD_TS) 
+			FROM ${VIEW_DB}.V_DWH_F_RWD_HIST_B
+		)
+			AND API_REDMPTN_DT IS NULL
+			AND RWD_EXPR_DT>RWD_ISSUE_DT+1
+	) SRC
+	UNION ALL
+	SELECT SRC.RWD_ID
+		,SRC.RWD_EXPR_DT DAY_KEY
+		,SRC.RWD_EXPR_DT END_DAY_KEY
+		,SRC.CUS_KEY
+		,0 ISSUE_FLG
+		,0 REDEEM_FLG
+		,1 EXPR_FLG		
+		,SRC.CERT_NUM
+		,SRC.RWD_DEF_KEY
+		,SRC.RWD_ISSUE_DT
+		,SRC.RWD_EXPR_DT
+		,SRC.API_REDMPTN_DT
+		,SRC.F_BAL
+	FROM (
+		SELECT * 
+		FROM ${VIEW_DB}.V_DWH_F_RWD_HIST_B
+		WHERE RCD_UPD_TS=(
+			SELECT MAX(RCD_UPD_TS) 
+			FROM ${VIEW_DB}.V_DWH_F_RWD_HIST_B
+		)
+			AND API_REDMPTN_DT IS NULL
+			AND RWD_EXPR_DT>RWD_ISSUE_DT
+	) SRC;
+	"
+
+	run_query -d "$TEMP_DB" -q "$INSERT_SQL" -m "Unable to Insert Records for Reward Customer Day Base into temp table" 
+	print_msg "${TEMP_TABLE} loaded successfully"
+	set_activity_count insert
+	audit_log 2 ${TARGET_DB} ${SOURCE_TABLE} "*" ${TEMP_TABLE}
+	set_bookmark "AFTER_LOAD_TEMP_TABLE"
+fi
+
+####### COLLECT STATS FOR TEMP TABLE ##############
+if [[ ${BOOKMARK} = "AFTER_LOAD_TEMP_TABLE" ]]
+then
+	print_msg "Collecting Statistics for ${TEMP_TABLE}"
+	
+	STATS_SQL="
+	COLLECT STATS COLUMN(RWD_ID,DAY_KEY)
+	ON ${TEMP_DB}.${TEMP_TABLE};
+	"
+	
+	run_query -d "${TEMP_DB}" -q "${STATS_SQL}" -m "Unable to collect statistics for Temp Table"
+	print_msg "${TEMP_TABLE} Statistics collected successfully"
+	set_bookmark "AFTER_COLLECT_STATS_TEMP_TABLE"
+fi
+
+############### LOAD INTO TARGET TABLE ########################
+if [[ ${BOOKMARK} = "AFTER_COLLECT_STATS_TEMP_TABLE" ]]
+then
+	print_msg "Loading ${TARGET_TABLE}"
+	print_msg "Deleting ${TARGET_TABLE}"		
+
+	DELETE_SQL="
+	DELETE FROM ${TARGET_DB}.${TARGET_TABLE} A
+	WHERE EXISTS (
+		SELECT 1 
+		FROM ${TEMP_DB}.${TEMP_TABLE} B 
+		WHERE A.RWD_ID=B.RWD_ID 
+			AND A.DAY_KEY=B.DAY_KEY
+	);
+	"
+	
+	set_audit_log_var
+	run_query -d "${TARGET_DB}" -q "${DELETE_SQL}" -m "Unable to Delete Reward Customer Day Records from target table" 	
+	print_msg "${TARGET_DB} deleted successfully"			
+	set_activity_count delete
+	audit_log 2 ${TARGET_DB} ${SOURCE_TABLE} "*" ${TARGET_TABLE}
+	set_bookmark "AFTER_DELETE_FROM_TARGET"
+fi
+
+if [[ ${BOOKMARK} = "AFTER_DELETE_FROM_TARGET" ]]
+then
+	print_msg "Collecting Statistics for ${TARGET_TABLE}"
+	
+	STATS_SQL="
+	COLLECT STATS COLUMN(RWD_ID,DAY_KEY)
+		, COLUMN(RWD_ID)
+		, COLUMN(DAY_KEY)
+	ON ${TARGET_DB}.${TARGET_TABLE};
+	"
+	
+	run_query -d "${TARGET_DB}" -q "${STATS_SQL}" -m "Unable to collect statistics for Target Table"
+	print_msg "${TARGET_TABLE} Statistics collected successfully"
+	set_bookmark "AFTER_COLLECT_STATS_TARGET_TABLE"
+fi
+
+
+if [[ ${BOOKMARK} = "AFTER_COLLECT_STATS_TARGET_TABLE" ]]
+then
+	insert_std_fact_from_temp_cdh
+	set_bookmark "AFTER_INSERT_STD_FACT_FROM_TEMP_2"
+	print_msg "${TARGET_TABLE} Load Complete"
+fi
+
+################ COLLECT STATS FOR TARGET TABLE ##################
+if [[ ${BOOKMARK} = "AFTER_INSERT_STD_FACT_FROM_TEMP_2" ]]
+then
+	print_msg "Collecting Statistics for ${TARGET_TABLE}"
+	
+	STATS_SQL="
+	COLLECT STATS COLUMN(RWD_ID,DAY_KEY)
+		, COLUMN(RWD_ID)
+		, COLUMN(DAY_KEY)
+		, COLUMN(DAY_KEY, END_DAY_KEY)
+		, COLUMN(END_DAY_KEY)
+		, COLUMN(CUS_KEY)
+	ON ${TARGET_DB}.${TARGET_TABLE};
+	"
+	
+	run_query -d "${TARGET_DB}" -q "${STATS_SQL}" -m "Unable to collect statistics for Target Table"
+	print_msg "${TARGET_TABLE} Statistics collected successfully"
+	set_bookmark "AFTER_COLLECT_STATS_TARGET_TABLE_2"
+fi
+
+############### DATA FILE POST-PROCESS ########################
+if [[ ${BOOKMARK} = "AFTER_COLLECT_STATS_TARGET_TABLE_2" ]]
+then
+	if [[ -f ${DATA_FILE} ]]
+	then
+		print_msg "Adding checksum to data file for archiving"
+		add_file_checksum
+		print_msg "Archiving data file from ${DATA_FILE} to ${ARCHIVE_DIR}"
+		mv -f ${DATA_FILE} ${ARCHIVE_DIR}
+		set_bookmark "DONE"
+	fi
+fi
+
+script_successful

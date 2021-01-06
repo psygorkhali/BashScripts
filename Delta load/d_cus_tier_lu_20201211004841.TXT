@@ -1,0 +1,10 @@
+f3a5c8e993093e29e71a718811f00c95
+6
+1539|LW|BaseTier||999999999|0||1|2|2|2|2||||||0||2020-09-15
+37234833|LW|Influencer|Influencer Relaunch Tier|2500|9999||||||||||||0|Influencer|2020-09-15
+37234834|LW|VIP|VIP Relaunch Tier|0|0||||||||||||0|VIP|2020-09-15
+1540|LW|A-List||999999999|0||1|2|2|2|2||||||0||2020-09-15
+37234836|LW|Insider|Insider Relaunch Tier|0|2499||||||||||||0|Insider|2020-09-15
+37234835|LW|A List|A-List Relaunch Tier|10000|999999||||||||||||0|A-List|2020-09-15
+f3a5c8e993093e29e71a718811f00c95
+6

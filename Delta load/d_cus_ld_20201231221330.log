@@ -1,0 +1,133 @@
+d_cus_ld 12/31/2020 22:13:30: Getting Module Type from DWH_C_BATCH_SCRIPTS
+Start:************************
+query_command : SELECT MODULE_TYP FROM EXPDW_ETE_DWH_V.V_DWH_C_BATCH_SCRIPTS WHERE LOWER(SCRIPT_NAME)=LOWER('d_cus_ld')
+END:************************
+
+d_cus_ld 12/31/2020 22:13:30: The current Module Type is : NTLY
+
+d_cus_ld 12/31/2020 22:13:30: Getting Module Load Type from DWH_C_BATCH_SCRIPTS
+Start:************************
+query_command : SELECT MODULE_LOAD_TYP FROM EXPDW_ETE_DWH_V.V_DWH_C_BATCH_SCRIPTS WHERE LOWER(SCRIPT_NAME)=LOWER('d_cus_ld')
+END:************************
+
+d_cus_ld 12/31/2020 22:13:31: The current Module Load Type is : NA
+d_cus_ld 12/31/2020 22:13:31: Getting Batch ID from DWH_C_BATCH_LOG
+Start:************************
+query_command : SELECT CAST(COALESCE(MAX(BATCH_ID),0) AS VARCHAR(20) ) FROM EXPDW_ETE_DWH_V.V_DWH_C_BATCH_LOG WHERE MODULE_NAME='NTLY'
+END:************************
+
+d_cus_ld 12/31/2020 22:13:31: The current Batch ID is : 1540
+
+d_cus_ld 12/31/2020 22:13:31: Getting Job Id from DWH_C_BATCH_SCRIPTS
+Start:************************
+query_command : SELECT TRIM(JOB_ID) FROM EXPDW_ETE_DWH_V.V_DWH_C_BATCH_SCRIPTS WHERE LOWER(SCRIPT_NAME)=LOWER('d_cus_ld')
+END:************************
+
+d_cus_ld 12/31/2020 22:13:31: The current Job ID is : 505
+
+d_cus_ld 12/31/2020 22:13:31: Getting bookmark from DWH_C_BATCH_LOG table
+Start:************************
+query_command : SELECT BOOKMARK FROM
+						(SELECT BOOKMARK,ROW_NUMBER() OVER (PARTITION BY JOB_NAME,BATCH_ID ORDER BY START_TIMESTAMP DESC,JOB_ID DESC) RNK FROM EXPDW_ETE_DWH_V.V_DWH_C_BATCH_LOG
+							WHERE  JOB_NAME = 'd_cus_ld'
+							AND BATCH_ID = 1540
+							AND STATUS='RESTART') AA
+						WHERE RNK=1
+							
+END:************************
+
+d_cus_ld 12/31/2020 22:13:31: The bookmark is : NONE
+d_cus_ld 12/31/2020 22:13:31: Checking for run-ability of the job for the batch
+Start:************************
+query_command : SELECT 1 FROM EXPDW_ETE_DWH_V.V_DWH_C_BATCH_LOG
+						WHERE  JOB_NAME = 'd_cus_ld'
+								AND BATCH_ID = 1540
+								AND STATUS IN ('COMPLETE','ERROR')
+						
+END:************************
+
+d_cus_ld 12/31/2020 22:13:31: Job ready for the run for the batch
+
+
+==============================================================================================================================================
+====================================================  RUNNING CODES FOR BOOKMARK = NONE  ================================================
+==============================================================================================================================================
+
+
+d_cus_ld 12/31/2020 22:13:31: Getting Current Date
+Start:************************
+query_command : SELECT PARAM_VALUE FROM EXPDW_ETE_DWH_V.V_DWH_C_PARAM WHERE  PARAM_NAME='BUSINESS_DATE'
+END:************************
+
+d_cus_ld 12/31/2020 22:13:31: Current date for the job = 2020-12-30
+
+d_cus_ld 12/31/2020 22:13:31: Getting load mode for the job
+Start:************************
+query_command : SELECT PARAM_VALUE FROM EXPDW_ETE_DWH_V.V_DWH_C_PARAM WHERE PARAM_NAME='Insert Mode'
+END:************************
+
+d_cus_ld 12/31/2020 22:13:32: The load mode for the job = Full
+
+d_cus_ld 12/31/2020 22:13:32: Getting primary currency for the job
+Start:************************
+query_command : SELECT PARAM_VALUE FROM EXPDW_ETE_DWH_V.V_DWH_C_PARAM WHERE PARAM_NAME='Primary Currency'
+END:************************
+
+d_cus_ld 12/31/2020 22:13:32: The primary currency for the job = USD
+
+d_cus_ld 12/31/2020 22:13:32: d_cus_ld Started
+d_cus_ld 12/31/2020 22:13:32: Getting current time-stamp for the job execution
+Start:************************
+query_command : SELECT CAST(CURRENT_TIMESTAMP AS TIMESTAMP(6))
+END:************************
+
+d_cus_ld 12/31/2020 22:13:32: The current time-stamp of the job = 2020-12-31 22:13:32.400000
+
+d_cus_ld 12/31/2020 22:13:32: Inserting batch log
+Start:************************
+query_command : INSERT INTO EXPDW_ETE_DWH.DWH_C_BATCH_LOG (
+                        BATCH_ID 
+    				   ,JOB_ID
+    				   ,MODULE_NAME
+    				   ,JOB_NAME
+    				   ,BUSINESS_DATE
+    				   ,START_TIMESTAMP
+    				   ,END_TIMESTAMP
+    				   ,STATUS
+    				   ,ERROR_DETAIL
+    				   ,BOOKMARK
+    				   ,LOGFILE)
+                   SELECT 1540
+                         ,505
+                         ,'NTLY'
+                        ,'d_cus_ld'
+    					 ,'2020-12-30'
+                         ,'2020-12-31 22:13:32.400000'
+                         ,CAST('9999-09-09' AS DATE FORMAT 'YYYY-MM-DD')
+                         ,'RUNNING'
+                         ,'RUNNING'
+                         ,'NONE'
+                         ,'/batch/ete/log/d_cus_ld_20201231221330.log'
+                   
+END:************************
+
+d_cus_ld 12/31/2020 22:13:32: Unexpected number of data files encountered: 4
+d_cus_ld 12/31/2020 22:13:32: Expected 1 data file for processing at a time
+d_cus_ld 12/31/2020 22:13:32: ############################################
+d_cus_ld 12/31/2020 22:13:32: ERROR found in script d_cus_ld
+d_cus_ld 12/31/2020 22:13:32: ERROR: Expected 1 data file for processing at a time
+d_cus_ld 12/31/2020 22:13:32: ############################################
+d_cus_ld 12/31/2020 22:13:32: Script Unsuccessful
+Start:************************
+query_command : UPDATE EXPDW_ETE_DWH.DWH_C_BATCH_LOG 
+                          SET      
+                                END_TIMESTAMP = CURRENT_TIMESTAMP
+                                ,STATUS='ERROR'
+                                ,BOOKMARK='NONE'
+                                ,ERROR_DETAIL='Expected 1 data file for processing at a time'
+								,JOB_ID='505'
+                          WHERE BATCH_ID='1540'
+    					  AND JOB_NAME='d_cus_ld'
+						  AND START_TIMESTAMP='2020-12-31 22:13:32.400000'
+END:************************
+
